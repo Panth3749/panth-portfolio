@@ -1,9 +1,17 @@
 "use client";
 /* LetterGlitch — self-contained Kexsio background.
-   Copy this file in, run `npm i` for any imports it uses, and render <LetterGlitch />.
-   Preset that matches the Kexsio store preview is at the bottom of this file. */
+   Preset: Blue, Dark Blue, Light Blue, Navy Blue color scheme on White background. */
 
 import React, { useRef, useEffect } from 'react';
+
+const DEFAULT_BLUE_GLITCH_COLORS = [
+  '#1E3A8A', // Navy Blue
+  '#0F172A', // Midnight Navy Blue
+  '#1D4ED8', // Dark Blue
+  '#2563EB', // Blue (Electric Royal)
+  '#38BDF8', // Light Blue (Sky)
+  '#60A5FA', // Light Blue (Soft Cornflower)
+];
 
 export interface LetterGlitchProps {
   glitchColors?: string[];
@@ -12,19 +20,23 @@ export interface LetterGlitchProps {
   outerVignette?: boolean;
   smooth?: boolean;
   characters?: string;
+  backgroundColor?: string;
   className?: string;
   style?: React.CSSProperties;
+  paused?: boolean;
 }
 
 export const LetterGlitch: React.FC<LetterGlitchProps> = ({
-  glitchColors = ['#2b4539', '#61dca3', '#61b3dc'],
-  glitchSpeed = 50,
+  glitchColors = DEFAULT_BLUE_GLITCH_COLORS,
+  glitchSpeed = 40,
   centerVignette = false,
   outerVignette = true,
   smooth = true,
   characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$&*()-_+=/[]{};:<>.,0123456789',
+  backgroundColor = '#FFFFFF',
   className = '',
-  style = {}
+  style = {},
+  paused = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationRef = useRef<number | null>(null);
@@ -39,6 +51,11 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
   const grid = useRef({ columns: 0, rows: 0 });
   const context = useRef<CanvasRenderingContext2D | null>(null);
   const lastGlitchTime = useRef(Date.now());
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+
+  const glitchColorsRef = useRef(glitchColors);
+  glitchColorsRef.current = glitchColors;
 
   const lettersAndSymbols = Array.from(characters);
 
@@ -51,7 +68,8 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
   };
 
   const getRandomColor = () => {
-    return glitchColors[Math.floor(Math.random() * glitchColors.length)];
+    const palette = glitchColorsRef.current;
+    return palette[Math.floor(Math.random() * palette.length)];
   };
 
   const hexToRgb = (hex: string) => {
@@ -108,6 +126,7 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
 
     const dpr = window.devicePixelRatio || 1;
     const rect = parent.getBoundingClientRect();
+
     const w = Math.max(1, rect.width || window.innerWidth);
     const h = Math.max(1, rect.height || window.innerHeight);
 
@@ -127,16 +146,21 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
   };
 
   const drawLetters = () => {
-    if (!context.current || letters.current.length === 0 || !canvasRef.current) return;
+    if (!context.current || letters.current.length === 0) return;
     const ctx = context.current;
-    const { width, height } = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const { width, height } = canvas.getBoundingClientRect();
     ctx.clearRect(0, 0, width, height);
     ctx.font = `${fontSize}px monospace`;
     ctx.textBaseline = 'top';
 
     letters.current.forEach((letter, index) => {
-      const x = (index % grid.current.columns) * charWidth;
-      const y = Math.floor(index / grid.current.columns) * charHeight;
+      const col = index % grid.current.columns;
+      const row = Math.floor(index / grid.current.columns);
+      const x = col * charWidth;
+      const y = row * charHeight;
       ctx.fillStyle = letter.color;
       ctx.fillText(letter.char, x, y);
     });
@@ -185,6 +209,11 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
   };
 
   const animate = () => {
+    if (pausedRef.current) {
+      animationRef.current = requestAnimationFrame(animate);
+      return;
+    }
+
     const now = Date.now();
     if (now - lastGlitchTime.current >= glitchSpeed) {
       updateLetters();
@@ -212,7 +241,9 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
     const handleResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        cancelAnimationFrame(animationRef.current as number);
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
         resizeCanvas();
         animate();
       }, 100);
@@ -221,63 +252,61 @@ export const LetterGlitch: React.FC<LetterGlitchProps> = ({
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(animationRef.current!);
+      clearTimeout(resizeTimeout);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       window.removeEventListener('resize', handleResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glitchSpeed, smooth]);
 
-  const containerStyle = {
+  const bgRgb = hexToRgb(backgroundColor) || { r: 255, g: 255, b: 255 };
+
+  const containerStyle: React.CSSProperties = {
     position: 'relative',
     width: '100%',
     height: '100%',
-    backgroundColor: '#000000',
+    backgroundColor: backgroundColor,
     overflow: 'hidden'
   };
 
-  const canvasStyle = {
+  const canvasStyle: React.CSSProperties = {
     display: 'block',
     width: '100%',
     height: '100%'
   };
 
-  const outerVignetteStyle = {
+  const outerVignetteStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
     left: 0,
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
-    background: 'radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,1) 100%)'
+    background: `radial-gradient(circle, rgba(${bgRgb.r},${bgRgb.g},${bgRgb.b},0) 60%, rgba(${bgRgb.r},${bgRgb.g},${bgRgb.b},1) 100%)`
   };
 
-  const centerVignetteStyle = {
+  const centerVignetteStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
     left: 0,
     width: '100%',
     height: '100%',
     pointerEvents: 'none',
-    background: 'radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%)'
+    background: `radial-gradient(circle, rgba(${bgRgb.r},${bgRgb.g},${bgRgb.b},0.8) 0%, rgba(${bgRgb.r},${bgRgb.g},${bgRgb.b},0) 60%)`
   };
 
   return (
-    <div className={className} style={{ ...containerStyle, ...style } as React.CSSProperties}>
+    <div
+      className={className}
+      style={{ ...containerStyle, ...style }}
+    >
       <canvas ref={canvasRef} style={canvasStyle} />
-      {outerVignette && <div style={outerVignetteStyle as React.CSSProperties}></div>}
-      {centerVignette && <div style={centerVignetteStyle as React.CSSProperties}></div>}
+      {outerVignette && <div style={outerVignetteStyle}></div>}
+      {centerVignette && <div style={centerVignetteStyle}></div>}
     </div>
   );
 };
 
 export default LetterGlitch;
-
-/* ── Kexsio store preset (matches the live preview) ──────────────────────────
-<LetterGlitch
-          glitchColors={["#2b4539", "#61dca3", "#61b3dc"]}
-          glitchSpeed={10}
-          centerVignette
-          outerVignette={false}
-          smooth
-        />
-──────────────────────────────────────────────────────────────────────────── */

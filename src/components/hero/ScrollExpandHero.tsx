@@ -28,6 +28,8 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export type MediaType = "ferrofluid" | "video" | "image";
 
+const BLUE_GLITCH_PALETTE = ['#1E3A8A', '#0F172A', '#1D4ED8', '#2563EB', '#38BDF8', '#60A5FA'];
+
 interface ScrollExpandHeroProps {
   onContactClick: () => void;
   children?: ReactNode;
@@ -632,7 +634,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       {/* ──────────────────────────────────────────────────────────── */}
       {/* Post-Ferrofluid Animated LetterGlitch Background            */}
       {/* ──────────────────────────────────────────────────────────── */}
-      <div ref={postHeroRef} className="relative z-20">
+      <div ref={postHeroRef} className="relative z-20 bg-white">
         {/* Seamless atmospheric gradient bridge from Hero into LetterGlitch */}
         <div
           className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#EDF4FB]/75 to-transparent"
@@ -641,7 +643,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
 
         {/* Soft luminous ambient glow bridging the two sections */}
         <div
-          className="absolute -top-36 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-b from-sky-300/30 via-emerald-500/15 to-transparent rounded-full blur-3xl pointer-events-none z-10"
+          className="absolute -top-36 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-b from-sky-300/30 via-blue-500/15 to-transparent rounded-full blur-3xl pointer-events-none z-10"
           aria-hidden="true"
         />
 
@@ -656,11 +658,14 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           }}
         >
           <LetterGlitch
-            glitchColors={["#2b4539", "#61dca3", "#61b3dc"]}
-            glitchSpeed={10}
-            centerVignette
-            outerVignette={false}
-            smooth
+            className="w-full h-full"
+            paused={!isPostHeroVisible}
+            glitchColors={BLUE_GLITCH_PALETTE}
+            backgroundColor="#FFFFFF"
+            glitchSpeed={40}
+            centerVignette={false}
+            outerVignette={true}
+            smooth={true}
           />
         </div>
 
