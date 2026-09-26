@@ -35,6 +35,20 @@ This repository is pre-configured for zero-configuration, continuous static site
 
 ---
 
+## 🖥️ Alternative 2: Deploying as a Web Service on Render
+
+If you selected **New +** $\rightarrow$ **Web Service** on Render:
+1. Connect `Panth3749/panth-portfolio`.
+2. Configure the fields:
+   - **Name**: `panth-portfolio`
+   - **Branch**: `main`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start` (or `node server.js`)
+3. Click **Create Web Service**.
+*(Our production `server.js` automatically binds to Render's dynamic `$PORT`, serves all assets, resumes, and handles SPA routing seamlessly!)*
+
+---
+
 ## 🌐 Custom Domain Setup
 
 1. In your Render service, go to **Settings** $\rightarrow$ **Custom Domains**.
