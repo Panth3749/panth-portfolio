@@ -22,13 +22,11 @@ import { personalProfile, ferrofluidPresets } from "../../data/portfolioData";
 import { FerrofluidPreset } from "../../types";
 import { GithubIcon, LinkedinIcon } from "../icons/SocialIcons";
 import { subscribeScroll, scrollTo } from "../../utils/smoothScroll";
-import { Lightfall } from "../background/Lightfall";
+import { LetterGlitch } from "../background/LetterGlitch";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export type MediaType = "ferrofluid" | "video" | "image";
-
-const LIGHTFALL_PALETTE = ['#FFFFFF', '#BAE6FD', '#7DD3FC', '#38BDF8', '#60A5FA', '#2563EB', '#1D4ED8', '#1E3A8A'];
 
 interface ScrollExpandHeroProps {
   onContactClick: () => void;
@@ -632,10 +630,10 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       </section>
 
       {/* ──────────────────────────────────────────────────────────── */}
-      {/* Post-Ferrofluid Animated Lightfall WebGL Background         */}
+      {/* Post-Ferrofluid Animated LetterGlitch Background            */}
       {/* ──────────────────────────────────────────────────────────── */}
       <div ref={postHeroRef} className="relative z-20">
-        {/* Seamless atmospheric gradient bridge from Hero into Lightfall */}
+        {/* Seamless atmospheric gradient bridge from Hero into LetterGlitch */}
         <div
           className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#EDF4FB]/75 to-transparent"
           aria-hidden="true"
@@ -643,11 +641,11 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
 
         {/* Soft luminous ambient glow bridging the two sections */}
         <div
-          className="absolute -top-36 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-b from-sky-300/30 via-blue-500/15 to-transparent rounded-full blur-3xl pointer-events-none z-10"
+          className="absolute -top-36 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-gradient-to-b from-sky-300/30 via-emerald-500/15 to-transparent rounded-full blur-3xl pointer-events-none z-10"
           aria-hidden="true"
         />
 
-        {/* Sticky Lightfall WebGL Canvas: stays locked in viewport with smooth top fade mask */}
+        {/* Sticky LetterGlitch Canvas: stays locked in viewport with smooth top fade mask */}
         <div
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden"
           style={{
@@ -657,24 +655,12 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
               "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 60px, rgba(0,0,0,0.2) 160px, rgba(0,0,0,0.7) 320px, black 500px)",
           }}
         >
-          <Lightfall
-            className="w-full h-full"
-            paused={!isPostHeroVisible}
-            colors={LIGHTFALL_PALETTE}
-            backgroundColor="#38BDF8"
-            speed={0.35}
-            streakCount={4}
-            streakWidth={1.25}
-            streakLength={1.4}
-            glow={1.25}
-            density={0.55}
-            twinkle={0.8}
-            zoom={2.8}
-            backgroundGlow={0.2}
-            opacity={0.88}
-            mouseInteraction={true}
-            mouseStrength={0.65}
-            themeMode="light"
+          <LetterGlitch
+            glitchColors={["#2b4539", "#61dca3", "#61b3dc"]}
+            glitchSpeed={10}
+            centerVignette
+            outerVignette={false}
+            smooth
           />
         </div>
 
