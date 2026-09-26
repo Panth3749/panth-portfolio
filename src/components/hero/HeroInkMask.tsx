@@ -85,6 +85,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.fillRect(0, 0, cssWidth, cssHeight);
 
     const isMobile = cssWidth < 768;
+    const isCompactH = cssHeight < 720;
     const cx = cssWidth / 2;
     const cy = cssHeight / 2;
 
@@ -234,9 +235,9 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     // 5. Central Astrolabe / Celestial Orbit Geometric Graphics
     ctx.save();
     const maxR = Math.min(cssWidth, cssHeight);
-    const rOuter = maxR * (isMobile ? 0.44 : 0.38);
-    const rMid = maxR * (isMobile ? 0.34 : 0.28);
-    const rInner = maxR * (isMobile ? 0.24 : 0.18);
+    const rOuter = maxR * (isMobile ? 0.44 : isCompactH ? 0.35 : 0.38);
+    const rMid = maxR * (isMobile ? 0.34 : isCompactH ? 0.26 : 0.28);
+    const rInner = maxR * (isMobile ? 0.24 : isCompactH ? 0.17 : 0.18);
 
     // Outer Dashed Orbit Ring with cardinal degree ticks
     ctx.strokeStyle = "rgba(186, 230, 253, 0.22)";
@@ -348,16 +349,16 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     // 6. MAIN TYPOGRAPHY LOCKUP (P&P Studio in Kraton font)
     ctx.save();
     // A. Decorative Top Eyebrow Badge with Flanking Rules
-    const badgeFontSize = Math.round(clamp(cssWidth * 0.012, 11, 13));
+    const badgeFontSize = Math.round(clamp(Math.min(cssWidth * 0.012, cssHeight * 0.022), 10, 13));
     ctx.font = `600 ${badgeFontSize}px "JetBrains Mono", monospace`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#BAE6FD"; // Luminous sky blue
     ctx.letterSpacing = "0.22em";
-    const badgeY = cy - (isMobile ? 76 : 108);
+    const badgeY = cy - (isMobile ? 64 : isCompactH ? 72 : 96);
 
     // Flanking horizontal rules
-    const ruleW = isMobile ? 36 : 80;
+    const ruleW = isMobile ? 32 : isCompactH ? 48 : 80;
     const badgeText = "✦   P & P   S T U D I O   ·   E S T .   2 0 2 6   ✦";
     const badgeMetrics = ctx.measureText(badgeText);
     const halfBadgeW = badgeMetrics.width / 2;
@@ -365,20 +366,20 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx - halfBadgeW - ruleW - 16, badgeY);
-    ctx.lineTo(cx - halfBadgeW - 16, badgeY);
-    ctx.moveTo(cx + halfBadgeW + 16, badgeY);
-    ctx.lineTo(cx + halfBadgeW + ruleW + 16, badgeY);
+    ctx.moveTo(cx - halfBadgeW - ruleW - 14, badgeY);
+    ctx.lineTo(cx - halfBadgeW - 14, badgeY);
+    ctx.moveTo(cx + halfBadgeW + 14, badgeY);
+    ctx.lineTo(cx + halfBadgeW + ruleW + 14, badgeY);
     ctx.stroke();
 
     ctx.fillText(badgeText, cx, badgeY);
 
     // B. MAIN TITLE: "P&P Studio" in Kraton font with dual-layer bloom
-    const titleFontSize = Math.round(clamp(cssWidth * 0.105, 56, 140));
+    const titleFontSize = Math.round(clamp(Math.min(cssWidth * 0.095, cssHeight * 0.16), 46, 128));
     ctx.font = `normal ${titleFontSize}px "Kraton", Georgia, serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const titleY = cy - (isMobile ? 14 : 22);
+    const titleY = cy - (isMobile ? 12 : isCompactH ? 14 : 20);
 
     // Pass 1: Luminous cyan atmospheric glow
     ctx.shadowColor = "rgba(56, 189, 248, 0.65)";
@@ -399,10 +400,10 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.shadowOffsetY = 0;
 
     // C. Decorative Diamond Flourish under title
-    const divY = cy + (isMobile ? 32 : 46);
+    const divY = cy + (isMobile ? 26 : isCompactH ? 32 : 44);
     ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
     ctx.lineWidth = 1;
-    const divW = isMobile ? 60 : 110;
+    const divW = isMobile ? 50 : isCompactH ? 70 : 100;
     ctx.beginPath();
     ctx.moveTo(cx - divW, divY);
     ctx.lineTo(cx - 12, divY);
@@ -421,14 +422,14 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.fill();
 
     // D. Subtitle Pill Capsule: "Panth Mistry · UI Architect & AI Developer"
-    const subFontSize = Math.round(clamp(cssWidth * 0.014, 12, 16));
+    const subFontSize = Math.round(clamp(Math.min(cssWidth * 0.013, cssHeight * 0.024), 11, 15));
     ctx.font = `600 ${subFontSize}px "JetBrains Mono", monospace`;
     ctx.letterSpacing = "0.12em";
     const subText = "PANTH MISTRY  ·  UI ARCHITECT & AI DEVELOPER";
     const subMetrics = ctx.measureText(subText);
-    const subY = cy + (isMobile ? 68 : 88);
-    const pillPadX = 22;
-    const pillH = subFontSize + 16;
+    const subY = cy + (isMobile ? 58 : isCompactH ? 66 : 84);
+    const pillPadX = 20;
+    const pillH = subFontSize + 14;
 
     // Translucent dark-glass pill background
     ctx.fillStyle = "rgba(7, 18, 42, 0.60)";
@@ -450,11 +451,11 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.fillText(subText, cx, subY);
 
     // E. Interactive Instruction Pill Chip
-    const hintFontSize = Math.round(clamp(cssWidth * 0.011, 10, 12));
+    const hintFontSize = Math.round(clamp(Math.min(cssWidth * 0.011, cssHeight * 0.02), 9, 12));
     ctx.font = `500 ${hintFontSize}px "JetBrains Mono", monospace`;
     ctx.letterSpacing = "0.10em";
     ctx.fillStyle = "rgba(224, 242, 254, 0.85)";
-    const hintY = cy + (isMobile ? 112 : 138);
+    const hintY = cy + (isMobile ? 96 : isCompactH ? 104 : 132);
     ctx.fillText("✨ MOVE CURSOR TO ERASE WITH INK  ·  SCROLL TO EXPAND ↓", cx, hintY);
 
     ctx.restore();
@@ -604,13 +605,12 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     let cachedBaseRadius = clamp(Math.min(cachedW, cachedH) * 0.075, 55, 95);
 
     const handleResize = () => {
-      const targetEl = canvas.parentElement || container;
-      const rect = targetEl.getBoundingClientRect();
-      const w = Math.max(1, rect.width || window.innerWidth);
-      const h = Math.max(1, Math.min(rect.height || window.innerHeight, window.innerHeight));
+      // The hero cover strictly spans the visible 100vh viewport
+      const w = Math.max(320, window.innerWidth);
+      const h = Math.max(320, window.innerHeight);
       cachedW = w;
       cachedH = h;
-      cachedBaseRadius = clamp(Math.min(w, h) * 0.075, 55, 95);
+      cachedBaseRadius = clamp(Math.min(w, h) * 0.075, 50, 90);
 
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(w * dpr);
@@ -625,6 +625,11 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
     handleResize();
     window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("orientationchange", handleResize, { passive: true });
+
+    let fontTimer1: ReturnType<typeof setTimeout> | undefined;
+    let fontTimer2: ReturnType<typeof setTimeout> | undefined;
+    let fontTimer3: ReturnType<typeof setTimeout> | undefined;
 
     if (typeof document !== "undefined" && document.fonts) {
       document.fonts.load('80px "Kraton"').then(() => {
@@ -636,6 +641,16 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
         if (!isRevealedRef.current) fillCover();
       });
     }
+
+    fontTimer1 = setTimeout(() => {
+      if (!isRevealedRef.current) fillCover();
+    }, 120);
+    fontTimer2 = setTimeout(() => {
+      if (!isRevealedRef.current) fillCover();
+    }, 400);
+    fontTimer3 = setTimeout(() => {
+      if (!isRevealedRef.current) fillCover();
+    }, 1000);
 
     // Pointer move listener on the hero container
     const handlePointerMove = (e: PointerEvent) => {
@@ -666,7 +681,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
-      const splashRadius = clamp(Math.min(rect.width, rect.height) * 0.08, 60, 110);
+      const splashRadius = clamp(Math.min(cachedW, cachedH) * 0.08, 60, 110);
       drawOrganicStamp(ctx, clientX, clientY, splashRadius, Math.random() * Math.PI, 15);
     };
 
@@ -755,6 +770,10 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+      if (fontTimer1) clearTimeout(fontTimer1);
+      if (fontTimer2) clearTimeout(fontTimer2);
+      if (fontTimer3) clearTimeout(fontTimer3);
       container.removeEventListener("pointermove", handlePointerMove);
       container.removeEventListener("pointerdown", handlePointerDown);
       container.removeEventListener("pointerleave", handlePointerLeave);
