@@ -604,9 +604,10 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     let cachedBaseRadius = clamp(Math.min(cachedW, cachedH) * 0.075, 55, 95);
 
     const handleResize = () => {
-      const rect = container.getBoundingClientRect();
-      const w = Math.max(1, rect.width);
-      const h = Math.max(1, rect.height);
+      const targetEl = canvas.parentElement || container;
+      const rect = targetEl.getBoundingClientRect();
+      const w = Math.max(1, rect.width || window.innerWidth);
+      const h = Math.max(1, Math.min(rect.height || window.innerHeight, window.innerHeight));
       cachedW = w;
       cachedH = h;
       cachedBaseRadius = clamp(Math.min(w, h) * 0.075, 55, 95);
@@ -640,7 +641,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     const handlePointerMove = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
 
-      const rect = container.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
 
@@ -662,7 +663,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       handlePointerMove(e);
 
       // Instant splash on click
-      const rect = container.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
       const splashRadius = clamp(Math.min(rect.width, rect.height) * 0.08, 60, 110);

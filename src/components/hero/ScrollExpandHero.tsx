@@ -67,6 +67,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
 
   // Direct DOM references for 120 FPS hardware acceleration
   const sectionRef = useRef<HTMLElement | null>(null);
+  const stickyRef = useRef<HTMLDivElement | null>(null);
   const postHeroRef = useRef<HTMLDivElement | null>(null);
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const [isPostHeroVisible, setIsPostHeroVisible] = useState(false);
@@ -280,7 +281,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
     <div className="relative min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E2EFFF] to-[#D5E8FD]">
       {/* Main Expansion Hero Stage (Pinned Sticky Scroll Track) */}
       <section id="scroll-expand-hero" ref={sectionRef} className="relative w-full h-[220vh]">
-        <div className="sticky top-0 w-full h-screen overflow-hidden">
+        <div ref={stickyRef} className="sticky top-0 w-full h-screen overflow-hidden">
         {/* Ambient Soft Warm & Sky Blue Glows */}
         <div
           ref={bgOverlayRef}
@@ -626,7 +627,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
         />
 
         {/* Interactive Ink Reveal Mask Layer (Paints away cover to reveal live Ferrofluid hero) */}
-        <HeroInkMask containerRef={sectionRef} scrollProgress={scrollProgress} />
+        <HeroInkMask containerRef={stickyRef} scrollProgress={scrollProgress} />
         </div>
       </section>
 
