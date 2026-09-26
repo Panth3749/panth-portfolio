@@ -42,11 +42,7 @@ const hexToRGB = (hex: string): RGB => {
 };
 
 const prepColors = (input?: string[]) => {
-  const base = (
-    input && input.length
-      ? input
-      : ['#FFFFFF', '#F8FAFC', '#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8', '#60A5FA', '#3B82F6']
-  ).slice(0, MAX_COLORS);
+  const base = (input && input.length ? input : ['#A6C8FF', '#5227FF', '#FF9FFC']).slice(0, MAX_COLORS);
   const count = base.length;
   const arr: RGB[] = [];
   for (let i = 0; i < MAX_COLORS; i++) arr.push(hexToRGB(base[Math.min(i, base.length - 1)]));
@@ -107,14 +103,6 @@ uniform float uMouseRadius;
 
 varying vec2 vUv;
 
-// Hash functions for procedural tubes
-float hash11(float p) {
-  p = fract(p * 0.1031);
-  p *= p + 33.33;
-  p *= p + p;
-  return fract(p);
-}
-
 vec3 palette(float h) {
   int count = uColorCount;
   if (count < 1) count = 1;
@@ -129,113 +117,75 @@ vec3 palette(float h) {
   return uColor7;
 }
 
-void mainImage(out vec4 fragColor, vec2 fragCoord) {
-  vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
+vec3 tanhv(vec3 x) {
+  vec3 e = exp(-2.0 * x);
+  return (1.0 - e) / (1.0 + e);
+}
 
-  // Diagonal angle matching the reference image (-42 degrees)
-  float angle = -0.733;
-  float cA = cos(angle);
-  float sA = sin(angle);
-  mat2 rot = mat2(cA, -sA, sA, cA);
-  vec2 p = rot * uv;
+vec2 sceneC(vec2 frag, vec2 r) {
+  vec2 P = (frag + frag - r) / r.x;
+  float z = 0.0;
+  float d = 1e3;
+  vec4 O = vec4(0.0);
+  for (int k = 0; k < 39; k++) {
+    if (d <= 1e-4) break;
+    O = z * normalize(vec4(P, uZoom, 0.0)) - vec4(0.0, 4.0, 1.0, 0.0) / 4.5;
+    d = 1.0 - sqrt(length(O * O));
+    z += d;
+  }
+  return vec2(O.x, atan(O.z, O.y));
+}
 
-  // Mouse interaction in screen space
-  vec2 mUv = (iMouse.xy - 0.5 * iResolution.xy) / iResolution.y;
-  float mouseDist = length(uv - mUv);
-  float mouseGlow = 0.0;
+void mainImage(out vec4 o, vec2 C) {
+  vec2 r = iResolution.xy;
+  vec2 uv0 = (C + C - r) / r.x;
+  float T = 0.1 * iTime * uSpeed + 9.0;
+  float angRings = max(1.0, floor(6.28318530718 * max(uDensity, 0.05) + 0.5));
+  vec2 Y = vec2(5e-3, 6.28318530718 / angRings);
+
+  vec2 c0 = sceneC(C, r);
+  vec2 cdx = sceneC(C + vec2(1.0, 0.0), r);
+  vec2 cdy = sceneC(C + vec2(0.0, 1.0), r);
+  vec2 dCx = cdx - c0;
+  vec2 dCy = cdy - c0;
+  dCx.y -= 6.28318530718 * floor(dCx.y / 6.28318530718 + 0.5);
+  dCy.y -= 6.28318530718 * floor(dCy.y / 6.28318530718 + 0.5);
+  vec2 fw = abs(dCx) + abs(dCy);
+  C = c0;
+
+  vec2 P = vec2(2.0, 1.0) * uv0 - (r / r.x) * vec2(0.0, 1.0);
+  vec4 O = vec4(uBgColor * 90.0 * uBgGlow / (1e3 * dot(P, P) + 6.0), 0.0);
+
+  float mGlow = 0.0;
   if (uMouseEnabled > 0.5) {
-    mouseGlow = exp(-mouseDist * mouseDist / max(uMouseRadius * uMouseRadius * 0.08, 1e-4)) * uMouseStrength;
+    vec2 mN = (iMouse + iMouse - r) / r.x;
+    float md = length(uv0 - mN);
+    mGlow = exp(-md * md / max(uMouseRadius * uMouseRadius, 1e-4)) * uMouseStrength;
+    O.rgb += uMouseColor * mGlow * 0.25;
   }
 
-  // Tube spacing & width
-  float spacing = 0.056 / max(0.25, uDensity);
-  float baseRadius = spacing * 0.44 * clamp(uStreakWidth, 0.5, 2.0);
+  float zr = 5e-4 * uStreakWidth;
+  vec2 rr = vec2(max(length(fw), 1e-5));
+  float tail = 19.0 / max(uStreakLength, 0.05);
 
-  // Background radiant sky-white canvas (NO dark theme!)
-  vec3 col = uBgColor;
-  col += vec3(-0.012, -0.008, 0.015) * uv.y;
-
-  float baseTrack = floor(p.x / spacing);
-  vec3 tubeAccum = vec3(0.0);
-  float maxAlpha = 0.0;
-  vec3 bloomAccum = vec3(0.0);
-
-  // Check 4 adjacent tube tracks to get seamless overlapping cylindrical ribbons
-  for (int i = -1; i <= 2; i++) {
-    float id = baseTrack + float(i);
-    float h1 = hash11(id * 19.173 + 3.41);
-    float h2 = hash11(id * 73.911 + 9.87);
-    float h3 = hash11(id * 141.53 + 1.23);
-
-    float cx = (id + 0.5) * spacing;
-    float dx = p.x - cx;
-
-    // Tube radius with subtle natural variation per strand
-    float r = baseRadius * (0.88 + 0.24 * h2);
-    float ndx = dx / r;
-
-    // Pulse calculation along tube length
-    float pulseSpeed = (uSpeed * 0.45 + 0.12) * (0.75 + 0.5 * h3);
-    float pulsePeriod = 1.9 + 1.4 * h1;
-    float pulsePhase = mod(p.y * 1.5 - iTime * pulseSpeed + h1 * 15.0, pulsePeriod);
-    float pulseLen = 0.22 * clamp(uStreakLength, 0.3, 3.0);
-    float pulseDist = abs(pulsePhase - pulsePeriod * 0.5);
-    float pulseIntensity = smoothstep(pulseLen, 0.0, pulseDist);
-    pulseIntensity = pulseIntensity * pulseIntensity;
-
-    // Tube color from the light palette (crisp whites, ice blues, sky blues)
-    vec3 tubeBase = palette(h1);
-
-    // Pulse core: glowing cyan / electric blue in light theme
-    vec3 pulseCol = mix(vec3(0.12, 0.65, 1.0), vec3(1.0, 1.0, 1.0), 0.70);
-
-    // Delicate luminous bloom
-    float haloDist = length(vec2(dx * 1.2, pulseDist * 0.6));
-    float halo = exp(-haloDist * haloDist / (r * r * 4.0)) * pulseIntensity * 0.85 * uGlow;
-    bloomAccum += pulseCol * halo;
-
-    if (abs(ndx) < 1.03) {
-      // 3D Cylindrical Surface Normal
-      float cndx = clamp(ndx, -1.0, 1.0);
-      float nz = sqrt(max(0.0, 1.0 - cndx * cndx));
-      vec3 normal = normalize(vec3(cndx, 0.0, nz));
-
-      // Key light from top-left creating crisp, clean light-theme cylindrical ridge
-      vec3 lightDir = normalize(vec3(-0.45, -0.32, 0.83));
-      float diff = max(0.0, dot(normal, lightDir));
-
-      // Clean bright specular streak along the tube length
-      vec3 viewDir = vec3(0.0, 0.0, 1.0);
-      vec3 halfDir = normalize(lightDir + viewDir);
-      float spec = pow(max(0.0, dot(normal, halfDir)), 18.0);
-
-      // Delicate light-theme edge crease shadow (NO heavy dark theme shadows!)
-      float edgeOcc = smoothstep(1.0, 0.68, abs(cndx));
-
-      // Light-theme shaded cylinder body: high ambient base (0.76), bright & airy
-      vec3 shaded = tubeBase * (0.76 + 0.24 * diff) + vec3(1.0) * spec * 0.45;
-      shaded *= (0.84 + 0.16 * edgeOcc); // Only gentle 16% soft contact crease
-
-      // Embedded glowing pulse slug
-      vec3 pulseInside = pulseCol * (pulseIntensity * 1.5 * uGlow);
-
-      // Mouse interactive lighting in sky-blue
-      shaded += vec3(0.1, 0.45, 0.9) * (mouseGlow * 0.25 * (0.6 + 0.4 * diff));
-
-      vec3 finalCylinder = shaded + pulseInside;
-
-      float alpha = smoothstep(1.02, 0.96, abs(ndx));
-
-      tubeAccum = mix(tubeAccum, finalCylinder, alpha);
-      maxAlpha = max(maxAlpha, alpha);
-    }
+  for (int m = 0; m < 16; m++) {
+    if (m >= uStreakCount) break;
+    float jf = float(m) + 1.0;
+    float ic = fract(sin(dot(vec2(jf, floor(C.x / Y.x + 0.5)), vec2(7.0, 11.0)) * 73.0));
+    vec2 Pp = C - (T + T * ic) * vec2(0.0, 1.0);
+    Pp -= floor(Pp / Y + 0.5) * Y;
+    float h = fract(8663.0 * ic);
+    vec3 col = palette(h);
+    float weight = mix(1.5, 1.0 + sin(T + 7.0 * h + 4.0), uTwinkle);
+    weight *= (1.0 + mGlow * 2.0);
+    vec2 inner = vec2(length(max(Pp, vec2(-1.0, 0.0))), length(Pp) - zr) - zr;
+    vec2 sm = vec2(1.0) - smoothstep(-rr, rr, inner);
+    O.rgb += dot(sm, vec2(exp(tail * Pp.y), 3.0)) * col * weight;
+    C.x += Y.x / 8.0;
   }
 
-  // Combine background, tubes, and glowing bloom
-  col = mix(col, tubeAccum, maxAlpha * uOpacity);
-  col += bloomAccum * uOpacity;
-
-  fragColor = vec4(col, uOpacity);
+  vec3 colr = sqrt(tanhv(max(O.rgb * uGlow - vec3(0.04, 0.08, 0.02), 0.0)));
+  o = vec4(colr, uOpacity);
 }
 
 void main() {
@@ -249,8 +199,8 @@ const Lightfall: React.FC<LightfallProps> = ({
   className,
   dpr,
   paused = false,
-  colors = ['#FFFFFF', '#F8FAFC', '#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8', '#60A5FA', '#3B82F6'],
-  backgroundColor = '#F0F7FF',
+  colors = ['#A6C8FF', '#5227FF', '#FF9FFC'],
+  backgroundColor = '#0A29FF',
   speed = 0.5,
   streakCount = 2,
   streakWidth = 1,
@@ -457,3 +407,7 @@ if (typeof document !== "undefined" && !document.getElementById("kx-bg-lightfall
   __kxStyle.textContent = __KX_CSS;
   document.head.appendChild(__kxStyle);
 }
+
+/* ── Kexsio store preset (matches the live preview) ──────────────────────────
+<Lightfall />
+──────────────────────────────────────────────────────────────────────────── */
