@@ -184,13 +184,13 @@ void mainImage(out vec4 o, vec2 C) {
   float tail = 19.0 / max(uStreakLength, 0.05);
 
   if (uIsLightMode > 0.5) {
-    // ── LIGHT MODE (Matches portfolio website light sky theme) ──
+    // ── BLUISH GREY GRADIENT BACKGROUND ──
     float yPos = clamp(vUv.y, 0.0, 1.0);
-    vec3 topCol = vec3(0.941, 0.969, 1.0);   // #F0F7FF (Hero edge match)
-    vec3 midCol = vec3(0.886, 0.937, 1.0);   // #E2EFFF
-    vec3 botCol = vec3(0.835, 0.910, 0.992); // #D5E8FD
+    vec3 topCol = vec3(0.76, 0.83, 0.90); // #C2D4E6 (Silvery/sky bluish grey)
+    vec3 midCol = vec3(0.56, 0.65, 0.75); // #8FA6BF (Soft steel bluish grey)
+    vec3 botCol = vec3(0.38, 0.47, 0.58); // #617894 (Architectural slate bluish grey)
 
-    // Smooth architectural background gradient
+    // Smooth architectural bluish grey gradient
     vec3 baseBg = mix(botCol, mix(midCol, topCol, clamp(yPos * 2.0 - 1.0, 0.0, 1.0)), clamp(yPos * 2.0, 0.0, 1.0));
 
     // ── STATIC GLOWING EFFECT ──
@@ -287,7 +287,7 @@ const Lightfall: React.FC<LightfallProps> = ({
   paused = false,
   theme = 'light',
   colors = DEFAULT_LIGHT_COLORS,
-  backgroundColor = '#E2EFFF',
+  backgroundColor = '#8FA6BF',
   speed = 0.45,
   streakCount = 5,
   streakWidth = 1.6,

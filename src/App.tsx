@@ -67,7 +67,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E2EFFF] to-[#D5E8FD] text-slate-800 flex flex-col font-sans selection:bg-sky-200 selection:text-blue-900">
+    <div className="min-h-screen bg-gradient-to-b from-[#DCE6F2] via-[#AEC2D8] to-[#7A95B5] text-slate-800 flex flex-col font-sans selection:bg-sky-200 selection:text-blue-900">
       {/* Hero Section with Scroll Expansion and Azure/Beige Ferrofluid */}
       <main className="flex-1">
         {/* Hero Section with Interactive Ink Reveal & Scroll Expansion */}

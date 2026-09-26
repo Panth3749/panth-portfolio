@@ -276,7 +276,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
     "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2400&q=90";
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E2EFFF] to-[#D5E8FD]">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#DCE6F2] via-[#AEC2D8] to-[#7A95B5]">
       {/* Main Expansion Hero Stage (Pinned Sticky Scroll Track) */}
       <section id="scroll-expand-hero" ref={sectionRef} className="relative w-full h-[220vh]">
         <div ref={stickyRef} className="sticky top-0 relative w-full h-screen overflow-hidden">
@@ -635,7 +635,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       <div ref={postHeroRef} className="relative z-20">
         {/* Seamless atmospheric gradient bridge from Hero into Lightfall */}
         <div
-          className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#EDF4FB]/75 to-transparent"
+          className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#DCE6F2]/80 to-transparent"
           aria-hidden="true"
         />
 
@@ -650,7 +650,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden flex items-center justify-center"
           aria-hidden="true"
         >
-          <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.20)_0%,rgba(37,99,235,0.08)_45%,transparent_75%)] blur-3xl" />
+          <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.22)_0%,rgba(100,135,175,0.18)_45%,transparent_75%)] blur-3xl" />
         </div>
 
         {/* Sticky Lightfall WebGL Canvas: stays locked in viewport with smooth top fade mask */}
@@ -667,6 +667,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
             className="w-full h-full"
             paused={!isPostHeroVisible}
             theme="light"
+            backgroundColor="#8FA6BF"
             speed={0.45}
             streakCount={5}
             streakWidth={1.8}
