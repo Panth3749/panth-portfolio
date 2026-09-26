@@ -29,14 +29,14 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 export type MediaType = "ferrofluid" | "video" | "image";
 
 const LIGHTFALL_PALETTE = [
-  '#FFFFFF', // White
-  '#BAE6FD', // Light Blue
-  '#7DD3FC', // Sky Light Blue
-  '#38BDF8', // Cyan Blue
-  '#3B82F6', // Blue
-  '#2563EB', // Royal Blue
-  '#1D4ED8', // Deep Royal Blue
-  '#1E3A8A', // Navy Blue
+  '#FFFFFF', // Pure White
+  '#F8FAFC', // Porcelain White
+  '#E0F2FE', // Luminous Ice Blue
+  '#BAE6FD', // Soft Sky Blue
+  '#7DD3FC', // Baby Blue
+  '#38BDF8', // Cyan Azure
+  '#60A5FA', // Cornflower Blue
+  '#3B82F6', // Crisp Royal Blue Accent
 ];
 
 interface ScrollExpandHeroProps {
@@ -670,17 +670,17 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
             className="w-full h-full"
             paused={!isPostHeroVisible}
             colors={LIGHTFALL_PALETTE}
-            backgroundColor="#0A1128"
+            backgroundColor="#F0F7FF"
             speed={0.4}
             streakCount={4}
             streakWidth={1.2}
             streakLength={1.4}
-            glow={1.3}
-            density={0.6}
+            glow={1.1}
+            density={0.65}
             twinkle={0.8}
             zoom={2.8}
-            backgroundGlow={0.35}
-            opacity={0.92}
+            backgroundGlow={0.3}
+            opacity={0.95}
             mouseInteraction={true}
             mouseStrength={0.65}
             mouseRadius={0.9}

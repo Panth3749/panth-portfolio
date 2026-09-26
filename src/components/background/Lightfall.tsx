@@ -45,7 +45,7 @@ const prepColors = (input?: string[]) => {
   const base = (
     input && input.length
       ? input
-      : ['#FFFFFF', '#BAE6FD', '#7DD3FC', '#38BDF8', '#3B82F6', '#2563EB', '#1D4ED8', '#1E3A8A']
+      : ['#FFFFFF', '#F8FAFC', '#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8', '#60A5FA', '#3B82F6']
   ).slice(0, MAX_COLORS);
   const count = base.length;
   const arr: RGB[] = [];
@@ -151,9 +151,9 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   float spacing = 0.056 / max(0.25, uDensity);
   float baseRadius = spacing * 0.44 * clamp(uStreakWidth, 0.5, 2.0);
 
-  // Background deep ambient canvas
+  // Background radiant sky-white canvas (NO dark theme!)
   vec3 col = uBgColor;
-  col += vec3(0.015, 0.03, 0.06) * (0.5 - uv.y);
+  col += vec3(-0.012, -0.008, 0.015) * uv.y;
 
   float baseTrack = floor(p.x / spacing);
   vec3 tubeAccum = vec3(0.0);
@@ -171,7 +171,7 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     float dx = p.x - cx;
 
     // Tube radius with subtle natural variation per strand
-    float r = baseRadius * (0.86 + 0.28 * h2);
+    float r = baseRadius * (0.88 + 0.24 * h2);
     float ndx = dx / r;
 
     // Pulse calculation along tube length
@@ -183,15 +183,15 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
     float pulseIntensity = smoothstep(pulseLen, 0.0, pulseDist);
     pulseIntensity = pulseIntensity * pulseIntensity;
 
-    // Tube color from the user's white / light-blue / royal / navy palette
+    // Tube color from the light palette (crisp whites, ice blues, sky blues)
     vec3 tubeBase = palette(h1);
 
-    // Pulse core is intense glowing white-cyan
-    vec3 pulseCol = mix(tubeBase, vec3(1.0, 1.0, 1.0), 0.88);
+    // Pulse core: glowing cyan / electric blue in light theme
+    vec3 pulseCol = mix(vec3(0.12, 0.65, 1.0), vec3(1.0, 1.0, 1.0), 0.70);
 
-    // Luminous halo bloom bleeding outside the tube (like in reference image)
+    // Delicate luminous bloom
     float haloDist = length(vec2(dx * 1.2, pulseDist * 0.6));
-    float halo = exp(-haloDist * haloDist / (r * r * 4.0)) * pulseIntensity * 1.6 * uGlow;
+    float halo = exp(-haloDist * haloDist / (r * r * 4.0)) * pulseIntensity * 0.85 * uGlow;
     bloomAccum += pulseCol * halo;
 
     if (abs(ndx) < 1.03) {
@@ -200,27 +200,27 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
       float nz = sqrt(max(0.0, 1.0 - cndx * cndx));
       vec3 normal = normalize(vec3(cndx, 0.0, nz));
 
-      // Key light from top-left creating high-contrast cylindrical ridge
+      // Key light from top-left creating crisp, clean light-theme cylindrical ridge
       vec3 lightDir = normalize(vec3(-0.45, -0.32, 0.83));
       float diff = max(0.0, dot(normal, lightDir));
 
-      // Sharp specular highlight streak along the tube length
+      // Clean bright specular streak along the tube length
       vec3 viewDir = vec3(0.0, 0.0, 1.0);
       vec3 halfDir = normalize(lightDir + viewDir);
-      float spec = pow(max(0.0, dot(normal, halfDir)), 22.0);
+      float spec = pow(max(0.0, dot(normal, halfDir)), 18.0);
 
-      // Edge shadow between cylinders
-      float edgeOcc = smoothstep(1.0, 0.65, abs(cndx));
+      // Delicate light-theme edge crease shadow (NO heavy dark theme shadows!)
+      float edgeOcc = smoothstep(1.0, 0.68, abs(cndx));
 
-      // Shaded cylinder body
-      vec3 shaded = tubeBase * (0.34 + 0.66 * diff) + vec3(0.95, 0.98, 1.0) * spec * 0.85;
-      shaded *= (0.40 + 0.60 * edgeOcc);
+      // Light-theme shaded cylinder body: high ambient base (0.76), bright & airy
+      vec3 shaded = tubeBase * (0.76 + 0.24 * diff) + vec3(1.0) * spec * 0.45;
+      shaded *= (0.84 + 0.16 * edgeOcc); // Only gentle 16% soft contact crease
 
-      // Embedded glowing pulse slug travelling inside the tube
-      vec3 pulseInside = pulseCol * (pulseIntensity * 3.4 * uGlow);
+      // Embedded glowing pulse slug
+      vec3 pulseInside = pulseCol * (pulseIntensity * 1.5 * uGlow);
 
-      // Mouse interactive lighting
-      shaded += uMouseColor * (mouseGlow * 0.5 * (0.6 + 0.4 * diff));
+      // Mouse interactive lighting in sky-blue
+      shaded += vec3(0.1, 0.45, 0.9) * (mouseGlow * 0.25 * (0.6 + 0.4 * diff));
 
       vec3 finalCylinder = shaded + pulseInside;
 
@@ -234,9 +234,6 @@ void mainImage(out vec4 fragColor, vec2 fragCoord) {
   // Combine background, tubes, and glowing bloom
   col = mix(col, tubeAccum, maxAlpha * uOpacity);
   col += bloomAccum * uOpacity;
-
-  // Atmospheric filmic tone curve
-  col = pow(col, vec3(0.94));
 
   fragColor = vec4(col, uOpacity);
 }
@@ -252,8 +249,8 @@ const Lightfall: React.FC<LightfallProps> = ({
   className,
   dpr,
   paused = false,
-  colors = ['#FFFFFF', '#BAE6FD', '#7DD3FC', '#38BDF8', '#3B82F6', '#2563EB', '#1D4ED8', '#1E3A8A'],
-  backgroundColor = '#0A1128',
+  colors = ['#FFFFFF', '#F8FAFC', '#E0F2FE', '#BAE6FD', '#7DD3FC', '#38BDF8', '#60A5FA', '#3B82F6'],
+  backgroundColor = '#F0F7FF',
   speed = 0.5,
   streakCount = 2,
   streakWidth = 1,
