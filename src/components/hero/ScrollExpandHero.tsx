@@ -658,6 +658,15 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           <Lightfall
             className="w-full h-full"
             paused={!isPostHeroVisible}
+            theme="light"
+            speed={0.45}
+            streakCount={5}
+            streakWidth={1.8}
+            streakLength={2.2}
+            glow={1.2}
+            density={0.65}
+            backgroundGlow={0.35}
+            mouseInteraction={true}
           />
         </div>
 
