@@ -28,6 +28,17 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export type MediaType = "ferrofluid" | "video" | "image";
 
+const LIGHTFALL_PALETTE = [
+  '#FFFFFF', // White
+  '#BAE6FD', // Light Blue
+  '#7DD3FC', // Sky Light Blue
+  '#38BDF8', // Cyan Blue
+  '#3B82F6', // Blue
+  '#2563EB', // Royal Blue
+  '#1D4ED8', // Deep Royal Blue
+  '#1E3A8A', // Navy Blue
+];
+
 interface ScrollExpandHeroProps {
   onContactClick: () => void;
   children?: ReactNode;
@@ -658,6 +669,21 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           <Lightfall
             className="w-full h-full"
             paused={!isPostHeroVisible}
+            colors={LIGHTFALL_PALETTE}
+            backgroundColor="#0A1128"
+            speed={0.4}
+            streakCount={4}
+            streakWidth={1.2}
+            streakLength={1.4}
+            glow={1.3}
+            density={0.6}
+            twinkle={0.8}
+            zoom={2.8}
+            backgroundGlow={0.35}
+            opacity={0.92}
+            mouseInteraction={true}
+            mouseStrength={0.65}
+            mouseRadius={0.9}
           />
         </div>
 
