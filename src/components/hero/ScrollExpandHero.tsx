@@ -645,6 +645,14 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           aria-hidden="true"
         />
 
+        {/* Persistent static glowing aura backdrop behind the Lightfall canvas */}
+        <div
+          className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.20)_0%,rgba(37,99,235,0.08)_45%,transparent_75%)] blur-3xl" />
+        </div>
+
         {/* Sticky Lightfall WebGL Canvas: stays locked in viewport with smooth top fade mask */}
         <div
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden"
@@ -663,7 +671,8 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
             streakCount={5}
             streakWidth={1.8}
             streakLength={2.2}
-            glow={1.2}
+            glow={1.25}
+            staticGlow={0.9}
             density={0.65}
             backgroundGlow={0.35}
             mouseInteraction={true}

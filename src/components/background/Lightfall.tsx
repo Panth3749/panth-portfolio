@@ -1,7 +1,8 @@
 "use client";
 /* Lightfall — self-contained WebGL Hopf Fibration Torus Background.
    Optimized for the architectural light-blue & white portfolio theme,
-   with support for customizable streak colors, density, speed, and interactive mouse glow. */
+   with support for customizable streak colors, density, speed, interactive mouse glow,
+   and stationary celestial glow effects. */
 
 import React, { useEffect, useRef } from 'react';
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
@@ -22,6 +23,7 @@ export interface LightfallProps {
   twinkle?: number;
   zoom?: number;
   backgroundGlow?: number;
+  staticGlow?: number;
   opacity?: number;
   mouseInteraction?: boolean;
   mouseStrength?: number;
@@ -108,6 +110,7 @@ uniform float uDensity;
 uniform float uTwinkle;
 uniform float uZoom;
 uniform float uBgGlow;
+uniform float uStaticGlow;
 uniform float uOpacity;
 uniform float uMouseEnabled;
 uniform float uMouseStrength;
@@ -190,9 +193,22 @@ void mainImage(out vec4 o, vec2 C) {
     // Smooth architectural background gradient
     vec3 baseBg = mix(botCol, mix(midCol, topCol, clamp(yPos * 2.0 - 1.0, 0.0, 1.0)), clamp(yPos * 2.0, 0.0, 1.0));
 
-    // Ambient radial lighting
-    float radial = 1.0 / (1.0 + 3.8 * dot(P, P));
-    baseBg += vec3(0.03, 0.08, 0.22) * radial * uBgGlow;
+    // ── STATIC GLOWING EFFECT ──
+    // 1. Broad celestial ambient radial glow (centered in upper focal aperture)
+    vec2 glowCenter = vec2(0.0, 0.12);
+    float dist = length(uv0 - glowCenter);
+    float aura1 = exp(-dist * 1.8);
+    float aura2 = exp(-dist * 4.5);
+    vec3 auraColor = mix(vec3(0.45, 0.75, 1.0), vec3(0.85, 0.95, 1.0), aura2);
+    baseBg += auraColor * (aura1 * 0.16 + aura2 * 0.22) * uStaticGlow;
+
+    // 2. Static horizon / focal plane glow arc along bottom curve
+    float focalArc = 1.0 / (1.0 + 3.5 * dot(P, P));
+    baseBg += vec3(0.15, 0.35, 0.75) * focalArc * 0.14 * uStaticGlow;
+
+    // 3. Faint stationary guide filaments (static lightfall rays)
+    float staticRibbon = pow(abs(cos(c0.y * 3.14159 * 1.5)), 44.0);
+    baseBg += vec3(0.55, 0.8, 1.0) * staticRibbon * 0.14 * uStaticGlow;
 
     // Interactive mouse highlight wash
     if (uMouseEnabled > 0.5) {
@@ -222,7 +238,7 @@ void mainImage(out vec4 o, vec2 C) {
       // Light-emitting bloom for bright streaks (white, ice cyan)
       float lum = dot(col, vec3(0.299, 0.587, 0.114));
       if (lum > 0.65) {
-        composite += col * pow(alpha, 1.8) * 0.38;
+        composite += col * pow(alpha, 1.6) * (0.42 + 0.32 * uStaticGlow);
       }
       C.x += Y.x / 8.0;
     }
@@ -231,6 +247,8 @@ void mainImage(out vec4 o, vec2 C) {
   } else {
     // ── DARK MODE (Classic Kexsio additive glow preset) ──
     vec4 O = vec4(uBgColor * 90.0 * uBgGlow / (1e3 * dot(P, P) + 6.0), 0.0);
+    O.rgb += vec3(0.12, 0.25, 0.7) * exp(-length(uv0) * 1.8) * 0.35 * uStaticGlow;
+
     if (uMouseEnabled > 0.5) {
       O.rgb += uMouseColor * mGlow * 0.25;
     }
@@ -279,6 +297,7 @@ const Lightfall: React.FC<LightfallProps> = ({
   twinkle = 0.85,
   zoom = 2.8,
   backgroundGlow = 0.35,
+  staticGlow = 0.85,
   opacity = 1,
   mouseInteraction = true,
   mouseStrength = 0.5,
@@ -344,6 +363,7 @@ const Lightfall: React.FC<LightfallProps> = ({
       uTwinkle: { value: twinkle },
       uZoom: { value: zoom },
       uBgGlow: { value: backgroundGlow },
+      uStaticGlow: { value: staticGlow },
       uOpacity: { value: opacity },
       uMouseEnabled: { value: mouseInteraction ? 1.0 : 0.0 },
       uMouseStrength: { value: mouseStrength },
@@ -462,6 +482,7 @@ const Lightfall: React.FC<LightfallProps> = ({
     (uniformsRef.current.uTwinkle as { value: number }).value = twinkle;
     (uniformsRef.current.uZoom as { value: number }).value = zoom;
     (uniformsRef.current.uBgGlow as { value: number }).value = backgroundGlow;
+    (uniformsRef.current.uStaticGlow as { value: number }).value = staticGlow;
     (uniformsRef.current.uOpacity as { value: number }).value = opacity;
     (uniformsRef.current.uMouseEnabled as { value: number }).value = mouseInteraction ? 1.0 : 0.0;
     (uniformsRef.current.uMouseStrength as { value: number }).value = mouseStrength;
@@ -480,6 +501,7 @@ const Lightfall: React.FC<LightfallProps> = ({
     twinkle,
     zoom,
     backgroundGlow,
+    staticGlow,
     opacity,
     mouseInteraction,
     mouseStrength,
