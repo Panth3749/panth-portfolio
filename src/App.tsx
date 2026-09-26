@@ -8,15 +8,15 @@ import { CertificationsSection } from './components/certifications/Certification
 import { ContactSection } from './components/contact/ContactSection';
 import { Footer } from './components/footer/Footer';
 import { ArchitectProfilePage } from './pages/ArchitectProfilePage';
-import { initSmoothScroll, scrollTo } from './utils/smoothScroll';
+import { initSmoothScroll, destroySmoothScroll, scrollTo } from './utils/smoothScroll';
 
 export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'home' | 'architect-profile'>('home');
 
   useEffect(() => {
-    const lenis = initSmoothScroll();
+    initSmoothScroll();
     return () => {
-      lenis?.destroy();
+      destroySmoothScroll();
     };
   }, []);
 

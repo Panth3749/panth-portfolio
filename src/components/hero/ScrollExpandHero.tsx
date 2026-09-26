@@ -21,8 +21,10 @@ import { FerrofluidControls } from "./FerrofluidControls";
 import { personalProfile, ferrofluidPresets } from "../../data/portfolioData";
 import { FerrofluidPreset } from "../../types";
 import { GithubIcon, LinkedinIcon } from "../icons/SocialIcons";
-import { getLenis, scrollTo } from "../../utils/smoothScroll";
+import { subscribeScroll, scrollTo } from "../../utils/smoothScroll";
 import { Lightfall } from "../background/Lightfall";
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export type MediaType = "ferrofluid" | "video" | "image";
 
@@ -224,26 +226,11 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       targetProgressRef.current = 1;
       currentProgressRef.current = 1;
       expandedRef.current = true;
-      document.body.style.overflow = "";
-      getLenis()?.start();
 
-      const mobile = viewportWidthRef.current < 768;
-      const mediaWidth = 320 + (mobile ? 650 : 1250);
-      const mediaHeight = 420 + (mobile ? 220 : 420);
-
-      if (frameRef.current) {
-        frameRef.current.style.width = `${mediaWidth}px`;
-        frameRef.current.style.height = `${mediaHeight}px`;
-      }
-      if (titleLeftRef.current) titleLeftRef.current.style.transform = `translateX(-${mobile ? 180 : 150}vw)`;
-      if (titleRightRef.current) titleRightRef.current.style.transform = `translateX(${mobile ? 180 : 150}vw)`;
-      if (subtitleRef.current) subtitleRef.current.style.opacity = "0";
-      if (indicatorRef.current) indicatorRef.current.style.opacity = "0";
-      if (bgOverlayRef.current) bgOverlayRef.current.style.opacity = "0.15";
-      if (expandedInfoRef.current) {
-        expandedInfoRef.current.style.opacity = "1";
-        expandedInfoRef.current.style.transform = "translateY(0px)";
-        expandedInfoRef.current.style.pointerEvents = "auto";
+      const heroEl = sectionRef.current;
+      if (heroEl) {
+        const span = heroEl.offsetHeight - window.innerHeight;
+        scrollTo(span + 20, 0);
       }
     };
 
@@ -251,107 +238,31 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
     return () => window.removeEventListener("expand-hero", handleExpandHero);
   }, []);
 
-  // Wheel and touch listeners
+  // Continuous, responsive scroll progress tracking for the hero sticky expansion track
   useEffect(() => {
-    const handleWheel = (event: globalThis.WheelEvent) => {
-      const heroEl = document.getElementById("scroll-expand-hero");
-      if (!heroEl) return;
+    let ticking = false;
 
-      const rect = heroEl.getBoundingClientRect();
-      const inExpansionZone = rect.top <= 70 && rect.top >= -80;
-
-      // If user is above this section (looking at ink reveal), allow normal scrolling down
-      if (!inExpansionZone) {
-        if (rect.top > 70) return;
-        if (rect.top < -80 && expandedRef.current) return;
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          const heroEl = sectionRef.current;
+          if (heroEl) {
+            const rect = heroEl.getBoundingClientRect();
+            const span = heroEl.offsetHeight - window.innerHeight;
+            const p = clamp01(span > 0 ? -rect.top / span : 0);
+            targetProgressRef.current = p;
+          }
+          ticking = false;
+        });
       }
-
-      if (expandedRef.current) {
-        if (event.deltaY < 0 && rect.top >= -10) {
-          event.preventDefault();
-          targetProgressRef.current = Math.max(
-            0,
-            targetProgressRef.current + event.deltaY * 0.0006
-          );
-        }
-        return;
-      }
-
-      // Inside expansion zone:
-      if (event.deltaY < 0 && targetProgressRef.current <= 0.001) {
-        // Allow scrolling back up to ink reveal
-        return;
-      }
-
-      event.preventDefault();
-      targetProgressRef.current = Math.min(
-        1,
-        Math.max(0, targetProgressRef.current + event.deltaY * 0.0006)
-      );
     };
 
-    const handleTouchStart = (event: globalThis.TouchEvent) => {
-      touchStartYRef.current = event.touches[0]?.clientY ?? null;
-    };
-
-    const handleTouchMove = (event: globalThis.TouchEvent) => {
-      const previousTouchY = touchStartYRef.current;
-      if (previousTouchY === null) return;
-
-      const currentTouchY = event.touches[0]?.clientY;
-      if (currentTouchY === undefined) return;
-
-      const deltaY = previousTouchY - currentTouchY;
-      const heroEl = document.getElementById("scroll-expand-hero");
-      if (!heroEl) return;
-
-      const rect = heroEl.getBoundingClientRect();
-      const inExpansionZone = rect.top <= 70 && rect.top >= -80;
-
-      if (!inExpansionZone) {
-        touchStartYRef.current = currentTouchY;
-        return;
-      }
-
-      if (expandedRef.current) {
-        if (deltaY < -15 && rect.top >= -10) {
-          event.preventDefault();
-          targetProgressRef.current = Math.max(
-            0,
-            targetProgressRef.current + deltaY * 0.003
-          );
-        }
-        touchStartYRef.current = currentTouchY;
-        return;
-      }
-
-      if (deltaY < 0 && targetProgressRef.current <= 0.001) {
-        touchStartYRef.current = currentTouchY;
-        return;
-      }
-
-      event.preventDefault();
-      targetProgressRef.current = Math.min(
-        1,
-        Math.max(0, targetProgressRef.current + deltaY * 0.003)
-      );
-      touchStartYRef.current = currentTouchY;
-    };
-
-    const handleTouchEnd = () => {
-      touchStartYRef.current = null;
-    };
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: false });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    const unsubscribe = subscribeScroll(onScroll);
+    onScroll();
 
     return () => {
-      window.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
+      unsubscribe();
     };
   }, []);
 
@@ -366,9 +277,10 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
     "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2400&q=90";
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-gradient-to-b from-[#F0F7FF] via-[#E2EFFF] to-[#D5E8FD]">
-      {/* Main Expansion Hero Stage */}
-      <section id="scroll-expand-hero" ref={sectionRef} className="relative min-h-[100dvh] w-full overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-b from-[#F0F7FF] via-[#E2EFFF] to-[#D5E8FD]">
+      {/* Main Expansion Hero Stage (Pinned Sticky Scroll Track) */}
+      <section id="scroll-expand-hero" ref={sectionRef} className="relative w-full h-[220vh]">
+        <div className="sticky top-0 w-full h-screen overflow-hidden">
         {/* Ambient Soft Warm & Sky Blue Glows */}
         <div
           ref={bgOverlayRef}
@@ -715,6 +627,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
 
         {/* Interactive Ink Reveal Mask Layer (Paints away cover to reveal live Ferrofluid hero) */}
         <HeroInkMask containerRef={sectionRef} scrollProgress={scrollProgress} />
+        </div>
       </section>
 
       {/* ──────────────────────────────────────────────────────────── */}

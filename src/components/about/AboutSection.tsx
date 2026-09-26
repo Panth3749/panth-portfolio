@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { LensReveal } from './LensReveal';
 import { personalProfile } from '../../data/portfolioData';
-import { getLenis, scrollTo } from '../../utils/smoothScroll';
+import { subscribeScroll, scrollTo } from '../../utils/smoothScroll';
 
 interface AboutSectionProps {
   onOpenProfile?: () => void;
@@ -121,23 +121,14 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ onOpenProfile }) => 
       }
     };
 
-    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    const unsubscribe = subscribeScroll(onScrollOrResize);
     window.addEventListener("resize", onScrollOrResize, { passive: true });
-    
-    // Connect to Lenis if active for zero-lag 120 FPS synchronization
-    const lenis = getLenis();
-    if (lenis) {
-      lenis.on('scroll', onScrollOrResize);
-    }
     
     update();
 
     return () => {
-      window.removeEventListener("scroll", onScrollOrResize);
+      unsubscribe();
       window.removeEventListener("resize", onScrollOrResize);
-      if (lenis) {
-        lenis.off('scroll', onScrollOrResize);
-      }
     };
   }, []);
 
