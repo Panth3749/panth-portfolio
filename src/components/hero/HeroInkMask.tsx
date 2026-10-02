@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Sparkles, RotateCcw, Eye } from "lucide-react";
+import { FoldText } from "../text/FoldText";
 
 interface HeroInkMaskProps {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -27,6 +28,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   const brushElementRef = useRef<HTMLDivElement | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [foldKey, setFoldKey] = useState(0);
 
   // References for spring physics & smooth interpolation
   const pointerRef = useRef({
@@ -374,30 +376,8 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
     ctx.fillText(badgeText, cx, badgeY);
 
-    // B. MAIN TITLE: "P&P Studio" in Kraton font with dual-layer bloom
-    const titleFontSize = Math.round(clamp(Math.min(cssWidth * 0.095, cssHeight * 0.16), 46, 128));
-    ctx.font = `normal ${titleFontSize}px "Kraton", Georgia, serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const titleY = cy - (isMobile ? 12 : isCompactH ? 14 : 20);
-
-    // Pass 1: Luminous cyan atmospheric glow
-    ctx.shadowColor = "rgba(56, 189, 248, 0.65)";
-    ctx.shadowBlur = 42;
-    ctx.fillStyle = "rgba(240, 249, 255, 0.95)";
-    ctx.fillText("P&P Studio", cx, titleY);
-
-    // Pass 2: High-contrast crisp white foreground with drop shadow
-    ctx.shadowColor = "rgba(7, 15, 35, 0.75)";
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetY = 6;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("P&P Studio", cx, titleY);
-
-    // Reset shadow
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
+    // B. MAIN TITLE: "P&P Studio" is rendered dynamically by the 3D <FoldText /> component overlay
+    // with 3D folding hinges, paper crease shading, and character cascade animation.
 
     // C. Decorative Diamond Flourish under title
     const divY = cy + (isMobile ? 26 : isCompactH ? 32 : 44);
@@ -459,9 +439,15 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.fillText("✨ MOVE CURSOR TO ERASE WITH INK  ·  SCROLL TO EXPAND ↓", cx, hintY);
 
     ctx.restore();
+  }, []);
+
+  // Manual Reset of the blueprint ink cover & re-triggering fold animation
+  const handleResetCover = useCallback(() => {
+    fillCover();
     setIsRevealed(false);
     setUserInteracted(false);
-  }, []);
+    setFoldKey((k) => k + 1);
+  }, [fillCover]);
 
   // Organic liquid brush stamp that cuts through the beige cover
   const drawOrganicStamp = useCallback(
@@ -805,6 +791,43 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
         className="absolute inset-0 block w-full h-full pointer-events-none"
       />
 
+      {/* 3D FoldText Title Overlay: "P&P Studio" */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+        style={{
+          transform: "translateY(-16px)",
+        }}
+      >
+        <div
+          className="pointer-events-auto cursor-pointer"
+          onClick={() => setFoldKey((k) => k + 1)}
+          title="Click to unfold P&P Studio"
+        >
+          <FoldText
+            key={foldKey}
+            text="P&P Studio"
+            splitBy="char"
+            hinge="top"
+            trigger="mount"
+            replayOnHover={true}
+            duration={0.8}
+            stagger={0.06}
+            ease="power3.out"
+            perspective={800}
+            creaseShading={0.55}
+            fontSize="clamp(2.9rem, 9.2vw, 7.8rem)"
+            fontWeight={400}
+            color="#FFFFFF"
+            className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
+            style={{
+              fontFamily: '"Kraton", Georgia, serif',
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            }}
+          />
+        </div>
+      </div>
+
       {/* Dynamic Spring Brush Cursor Indicator (Luminous White on Blue) */}
       <div
         ref={brushElementRef}
@@ -822,7 +845,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       <div className="absolute top-6 right-6 z-50 flex items-center gap-2.5 pointer-events-auto">
         <button
           type="button"
-          onClick={fillCover}
+          onClick={handleResetCover}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/30 text-xs font-semibold text-white shadow-md shadow-black/10 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
           title="Reset ink cover and redraw P&P Studio"
         >
