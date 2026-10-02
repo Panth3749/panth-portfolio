@@ -29,6 +29,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const [foldKey, setFoldKey] = useState(0);
+  const [isFoldComplete, setIsFoldComplete] = useState(false);
 
   // References for spring physics & smooth interpolation
   const pointerRef = useRef({
@@ -53,6 +54,12 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   const lastDropletTimeRef = useRef(0);
   const isRevealedRef = useRef(false);
   isRevealedRef.current = isRevealed;
+
+  const userInteractedRef = useRef(false);
+  userInteractedRef.current = userInteracted;
+
+  const isFoldCompleteRef = useRef(false);
+  isFoldCompleteRef.current = isFoldComplete;
 
   // Fill canvas with luxury architectural "Design Flex" cover and prominent Kraton "P&P Studio" title
   const fillCover = useCallback(() => {
@@ -441,11 +448,81 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     ctx.restore();
   }, []);
 
+  // Draw the exact matching "P&P Studio" title directly onto the canvas
+  // This allows the organic ink eraser to cut transparent holes right through the letters
+  const drawTitleToCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssWidth = canvas.width / dpr;
+    const cssHeight = canvas.height / dpr;
+    const cx = cssWidth / 2;
+    const cy = cssHeight / 2;
+    const titleY = cy - 16;
+
+    // Font size matching FoldText: clamp(2.9rem, 9.2vw, 7.8rem)
+    const titleFontSize = Math.round(
+      clamp(Math.min(cssWidth * 0.092, cssHeight * 0.16), 46.4, 124.8)
+    );
+
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
+
+    ctx.font = `normal ${titleFontSize}px "Kraton", Georgia, serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    if ("letterSpacing" in ctx) {
+      // @ts-ignore
+      ctx.letterSpacing = "0.02em";
+    }
+
+    // Pass 1: Luminous cyan atmospheric glow
+    ctx.shadowColor = "rgba(56, 189, 248, 0.75)";
+    ctx.shadowBlur = 35;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    // Pass 2: Deep obsidian drop shadow
+    ctx.shadowColor = "rgba(7, 15, 35, 0.75)";
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 6;
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    // Pass 3: Ultra-crisp razor white core
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    ctx.restore();
+  }, []);
+
+  // Called when FoldText finishes its initial 3D unfolding animation
+  const handleFoldComplete = useCallback(() => {
+    if (!isFoldCompleteRef.current) {
+      isFoldCompleteRef.current = true;
+      setIsFoldComplete(true);
+      drawTitleToCanvas();
+    }
+  }, [drawTitleToCanvas]);
+
   // Manual Reset of the blueprint ink cover & re-triggering fold animation
   const handleResetCover = useCallback(() => {
+    isFoldCompleteRef.current = false;
+    setIsFoldComplete(false);
     fillCover();
     setIsRevealed(false);
     setUserInteracted(false);
+    userInteractedRef.current = false;
     setFoldKey((k) => k + 1);
   }, [fillCover]);
 
@@ -607,6 +684,9 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       fillCover();
+      if (isFoldCompleteRef.current) {
+        drawTitleToCanvas();
+      }
     };
 
     handleResize();
@@ -617,30 +697,34 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     let fontTimer2: ReturnType<typeof setTimeout> | undefined;
     let fontTimer3: ReturnType<typeof setTimeout> | undefined;
 
+    const redrawIfClean = () => {
+      if (!isRevealedRef.current && !userInteractedRef.current) {
+        fillCover();
+        if (isFoldCompleteRef.current) {
+          drawTitleToCanvas();
+        }
+      }
+    };
+
     if (typeof document !== "undefined" && document.fonts) {
-      document.fonts.load('80px "Kraton"').then(() => {
-        if (!isRevealedRef.current) fillCover();
-      }).catch(() => {
-        if (!isRevealedRef.current) fillCover();
-      });
-      document.fonts.ready.then(() => {
-        if (!isRevealedRef.current) fillCover();
-      });
+      document.fonts.load('80px "Kraton"').then(redrawIfClean).catch(redrawIfClean);
+      document.fonts.ready.then(redrawIfClean);
     }
 
-    fontTimer1 = setTimeout(() => {
-      if (!isRevealedRef.current) fillCover();
-    }, 120);
-    fontTimer2 = setTimeout(() => {
-      if (!isRevealedRef.current) fillCover();
-    }, 400);
-    fontTimer3 = setTimeout(() => {
-      if (!isRevealedRef.current) fillCover();
-    }, 1000);
+    fontTimer1 = setTimeout(redrawIfClean, 120);
+    fontTimer2 = setTimeout(redrawIfClean, 400);
+    fontTimer3 = setTimeout(redrawIfClean, 1000);
 
     // Pointer move listener on the hero container
     const handlePointerMove = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
+
+      // If user starts interacting before fold timeline finishes, immediately bake to canvas so erasing cuts through title
+      if (!isFoldCompleteRef.current) {
+        isFoldCompleteRef.current = true;
+        setIsFoldComplete(true);
+        drawTitleToCanvas();
+      }
 
       const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
@@ -657,10 +741,16 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       }
 
       setUserInteracted(true);
+      userInteractedRef.current = true;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
+      if (!isFoldCompleteRef.current) {
+        isFoldCompleteRef.current = true;
+        setIsFoldComplete(true);
+        drawTitleToCanvas();
+      }
       handlePointerMove(e);
 
       // Instant splash on click
@@ -764,7 +854,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       container.removeEventListener("pointerdown", handlePointerDown);
       container.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [containerRef, drawOrganicStamp, fillCover, paintBetween]);
+  }, [containerRef, drawOrganicStamp, drawTitleToCanvas, fillCover, paintBetween]);
 
   // Handle Reveal All
   const handleRevealAll = () => {
@@ -791,42 +881,45 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
         className="absolute inset-0 block w-full h-full pointer-events-none"
       />
 
-      {/* 3D FoldText Title Overlay: "P&P Studio" */}
-      <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
-        style={{
-          transform: "translateY(-16px)",
-        }}
-      >
+      {/* 3D FoldText Title Overlay: "P&P Studio" - unfolds in 3D, then bakes to canvas so ink erasing cuts through it */}
+      {!isFoldComplete && (
         <div
-          className="pointer-events-auto cursor-pointer"
-          onClick={() => setFoldKey((k) => k + 1)}
-          title="Click to unfold P&P Studio"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+          style={{
+            transform: "translateY(-16px)",
+          }}
         >
-          <FoldText
-            key={foldKey}
-            text="P&P Studio"
-            splitBy="char"
-            hinge="top"
-            trigger="mount"
-            replayOnHover={true}
-            duration={0.8}
-            stagger={0.06}
-            ease="power3.out"
-            perspective={800}
-            creaseShading={0.55}
-            fontSize="clamp(2.9rem, 9.2vw, 7.8rem)"
-            fontWeight={400}
-            color="#FFFFFF"
-            className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
-            style={{
-              fontFamily: '"Kraton", Georgia, serif',
-              letterSpacing: '0.02em',
-              whiteSpace: 'nowrap',
-            }}
-          />
+          <div
+            className="pointer-events-auto cursor-pointer"
+            onClick={() => setFoldKey((k) => k + 1)}
+            title="Click to unfold P&P Studio"
+          >
+            <FoldText
+              key={foldKey}
+              text="P&P Studio"
+              splitBy="char"
+              hinge="top"
+              trigger="mount"
+              replayOnHover={false}
+              duration={0.8}
+              stagger={0.06}
+              ease="power3.out"
+              perspective={800}
+              creaseShading={0.55}
+              fontSize="clamp(2.9rem, 9.2vw, 7.8rem)"
+              fontWeight={400}
+              color="#FFFFFF"
+              className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
+              style={{
+                fontFamily: '"Kraton", Georgia, serif',
+                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap',
+              }}
+              onComplete={handleFoldComplete}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Dynamic Spring Brush Cursor Indicator (Luminous White on Blue) */}
       <div
