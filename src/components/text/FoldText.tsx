@@ -81,6 +81,8 @@ export const FoldText: React.FC<FoldTextProps> = ({
 }) => {
   const rootRef = useRef<HTMLSpanElement | null>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
   const hingeConfig = HINGE_CONFIG[hinge] || HINGE_CONFIG.top;
   const safeCrease = clamp(creaseShading, 0, 1);
   const safePerspective = Math.max(120, perspective);
@@ -165,10 +167,7 @@ export const FoldText: React.FC<FoldTextProps> = ({
       duration: activeDuration,
       ease: reduceMotion ? 'power1.out' : ease,
       stagger: activeStagger,
-      clearProps: 'willChange',
-      onComplete: () => {
-        if (onComplete) onComplete();
-      }
+      clearProps: 'willChange'
     };
 
     const killTimeline = () => {
@@ -181,11 +180,19 @@ export const FoldText: React.FC<FoldTextProps> = ({
       killTimeline();
       timelineRef.current = gsap.timeline({
         repeat: repeat ? -1 : 0,
-        repeatDelay: repeat ? 0.75 : 0
+        repeatDelay: repeat ? 0.75 : 0,
+        onComplete: () => {
+          if (onCompleteRef.current) onCompleteRef.current();
+        }
       });
       timelineRef.current.fromTo(pieces, fromVars, toVars);
       return timelineRef.current;
     };
+
+    const totalDuration = activeDuration + (pieces.length - 1) * activeStagger + 0.15;
+    const fallbackTimer = setTimeout(() => {
+      if (onCompleteRef.current) onCompleteRef.current();
+    }, Math.ceil(totalDuration * 1000));
 
     let scrollTriggerInstance: ScrollTrigger | undefined;
     let hoverHandler: (() => void) | undefined;
@@ -223,6 +230,7 @@ export const FoldText: React.FC<FoldTextProps> = ({
     }
 
     return () => {
+      clearTimeout(fallbackTimer);
       if (hoverHandler) root.removeEventListener('mouseenter', hoverHandler);
       scrollTriggerInstance?.kill();
       killTimeline();
@@ -240,8 +248,7 @@ export const FoldText: React.FC<FoldTextProps> = ({
     replayOnHover,
     hingeConfig.origin,
     hingeConfig.rotateX,
-    hingeConfig.rotateY,
-    onComplete
+    hingeConfig.rotateY
   ]);
 
   const rootStyle: React.CSSProperties = {

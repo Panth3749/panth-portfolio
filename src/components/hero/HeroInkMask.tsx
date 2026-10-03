@@ -20,6 +20,32 @@ function lerp(from: number, to: number, amount: number) {
   return from + (to - from) * amount;
 }
 
+function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  if (typeof ctx.roundRect === "function") {
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+}
+
 export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   containerRef,
   scrollProgress,
@@ -29,6 +55,9 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const [foldKey, setFoldKey] = useState(0);
+  const [isFoldComplete, setIsFoldComplete] = useState(false);
+  const isFoldCompleteRef = useRef(false);
+  isFoldCompleteRef.current = isFoldComplete;
 
   // References for spring physics & smooth interpolation
   const pointerRef = useRef({
@@ -57,6 +86,174 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
   const userInteractedRef = useRef(false);
   userInteractedRef.current = userInteracted;
+
+  // Draws "P&P Studio" directly onto the canvas with glowing atmospheric bloom & deep drop shadow
+  const drawTitleToCanvas = useCallback((
+    targetCtx?: CanvasRenderingContext2D,
+    targetW?: number,
+    targetH?: number
+  ) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = targetCtx || canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssWidth = targetW ?? canvas.width / dpr;
+    const cssHeight = targetH ?? canvas.height / dpr;
+    const cx = cssWidth / 2;
+    const cy = cssHeight / 2;
+    const titleY = cy - 16;
+
+    const titleFontSize = Math.round(
+      clamp(Math.min(cssWidth * 0.092, cssHeight * 0.16), 46.4, 124.8)
+    );
+
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `400 ${titleFontSize}px "Kraton", Georgia, serif`;
+    if ("letterSpacing" in ctx) {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = "0.02em";
+    }
+
+    // Pass 1: Luminous Cyan Atmospheric Bloom
+    ctx.shadowColor = "rgba(56, 189, 248, 0.75)";
+    ctx.shadowBlur = 35;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    // Pass 2: Deep Obsidian Drop Shadow
+    ctx.shadowColor = "rgba(7, 15, 35, 0.75)";
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 6;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    // Pass 3: Crisp Solid White Core (no shadow)
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("P&P Studio", cx, titleY);
+
+    ctx.restore();
+  }, []);
+
+  // Draws architectural decorative elements (eyebrow, diamond, subtitle pill, interactive hint) onto canvas
+  const drawDecorativeLockup = useCallback((
+    ctx: CanvasRenderingContext2D,
+    cssWidth: number,
+    cssHeight: number
+  ) => {
+    const isMobile = cssWidth < 768;
+    const cx = cssWidth / 2;
+    const cy = cssHeight / 2;
+    const titleY = cy - 16;
+    const titleFontSize = Math.round(
+      clamp(Math.min(cssWidth * 0.092, cssHeight * 0.16), 46.4, 124.8)
+    );
+
+    ctx.save();
+    ctx.globalCompositeOperation = "source-over";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // A. Decorative Top Eyebrow Badge
+    const eyebrowY = titleY - titleFontSize * 0.52 - (isMobile ? 14 : 20);
+    const eyebrowText = "✦   P & P   S T U D I O   ·   E S T .   2 0 2 6   ✦";
+    ctx.font = `600 ${isMobile ? 9 : 11}px "JetBrains Mono", monospace`;
+    if ("letterSpacing" in ctx) {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = "0.22em";
+    }
+    const ebMetrics = ctx.measureText(eyebrowText);
+    const ebHalfW = ebMetrics.width / 2;
+    const ruleLen = isMobile ? 32 : 64;
+    const ruleGap = 12;
+
+    ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - ebHalfW - ruleGap - ruleLen, eyebrowY);
+    ctx.lineTo(cx - ebHalfW - ruleGap, eyebrowY);
+    ctx.moveTo(cx + ebHalfW + ruleGap, eyebrowY);
+    ctx.lineTo(cx + ebHalfW + ruleGap + ruleLen, eyebrowY);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(186, 230, 253, 0.95)";
+    ctx.fillText(eyebrowText, cx, eyebrowY);
+
+    // B. Decorative Diamond Flourish
+    const diamondY = titleY + titleFontSize * 0.52 + (isMobile ? 14 : 20);
+    const dSize = isMobile ? 6 : 8;
+    ctx.save();
+    ctx.translate(cx, diamondY);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = "#7DD3FC";
+    ctx.shadowColor = "rgba(125, 211, 252, 0.85)";
+    ctx.shadowBlur = 8;
+    ctx.fillRect(-dSize / 2, -dSize / 2, dSize, dSize);
+    ctx.restore();
+
+    const dRuleLen = isMobile ? 48 : 96;
+    const dRuleGap = isMobile ? 12 : 16;
+    ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - dRuleGap - dRuleLen, diamondY);
+    ctx.lineTo(cx - dRuleGap, diamondY);
+    ctx.moveTo(cx + dRuleGap, diamondY);
+    ctx.lineTo(cx + dRuleGap + dRuleLen, diamondY);
+    ctx.stroke();
+
+    // C. Subtitle Pill Capsule
+    const pillY = diamondY + (isMobile ? 26 : 34);
+    const pillText = "PANTH MISTRY · UI ARCHITECT & AI DEVELOPER";
+    ctx.font = `600 ${isMobile ? 10 : 12}px "JetBrains Mono", monospace`;
+    if ("letterSpacing" in ctx) {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = "0.12em";
+    }
+    const pillMetrics = ctx.measureText(pillText);
+    const pillPadX = isMobile ? 16 : 22;
+    const pillW = pillMetrics.width + pillPadX * 2;
+    const pillH = isMobile ? 26 : 32;
+    const pillR = pillH / 2;
+    const pillX = cx - pillW / 2;
+    const pillTop = pillY - pillH / 2;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = "rgba(7, 18, 42, 0.75)";
+    drawRoundedRect(ctx, pillX, pillTop, pillW, pillH, pillR);
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "rgba(186, 230, 253, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = "#E0F2FE";
+    ctx.fillText(pillText, cx, pillY);
+    ctx.restore();
+
+    // D. Interactive Hint
+    const hintY = pillY + (isMobile ? 24 : 30);
+    const hintText = "✨ MOVE CURSOR TO ERASE WITH INK · SCROLL TO EXPAND ↓";
+    ctx.font = `500 ${isMobile ? 8.5 : 10.5}px "JetBrains Mono", monospace`;
+    if ("letterSpacing" in ctx) {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = "0.10em";
+    }
+    ctx.fillStyle = "rgba(224, 242, 254, 0.85)";
+    ctx.fillText(hintText, cx, hintY);
+
+    ctx.restore();
+  }, []);
 
   // Fill canvas with luxury architectural "Design Flex" cover and prominent Kraton "P&P Studio" title
   const fillCover = useCallback(() => {
@@ -350,13 +547,32 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // 6. Draw central architectural decorative lockup (Eyebrow, Diamond, Subtitle Pill, Hint)
+    drawDecorativeLockup(ctx, cssWidth, cssHeight);
+
+    // 7. If fold animation already completed, also bake "P&P Studio" onto canvas
+    if (isFoldCompleteRef.current) {
+      drawTitleToCanvas(ctx, cssWidth, cssHeight);
+    }
+
     ctx.restore();
-  }, []);
+  }, [drawDecorativeLockup, drawTitleToCanvas]);
+
+  // Handle completion of FoldText 3D unfolding animation: bake static title onto canvas
+  const handleFoldComplete = useCallback(() => {
+    if (isFoldCompleteRef.current) return;
+    isFoldCompleteRef.current = true;
+    setIsFoldComplete(true);
+    drawTitleToCanvas();
+  }, [drawTitleToCanvas]);
 
   // Manual Reset of the blueprint ink cover & re-triggering fold animation
   const handleResetCover = useCallback(() => {
     setUserInteracted(false);
     totalMoveDistanceRef.current = 0;
+    isFoldCompleteRef.current = false;
+    setIsFoldComplete(false);
     fillCover();
     setIsRevealed(false);
     setFoldKey((k) => k + 1);
@@ -549,6 +765,13 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     const handlePointerMove = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
 
+      // If user starts interacting before fold animation completes, bake title immediately to canvas
+      if (!isFoldCompleteRef.current) {
+        isFoldCompleteRef.current = true;
+        setIsFoldComplete(true);
+        drawTitleToCanvas();
+      }
+
       const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
@@ -574,6 +797,11 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
     const handlePointerDown = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
+      if (!isFoldCompleteRef.current) {
+        isFoldCompleteRef.current = true;
+        setIsFoldComplete(true);
+        drawTitleToCanvas();
+      }
       setUserInteracted(true);
       userInteractedRef.current = true;
       handlePointerMove(e);
@@ -679,7 +907,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       container.removeEventListener("pointerdown", handlePointerDown);
       container.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [containerRef, drawOrganicStamp, fillCover, paintBetween]);
+  }, [containerRef, drawOrganicStamp, fillCover, paintBetween, drawTitleToCanvas]);
 
   // Handle Reveal All
   const handleRevealAll = () => {
@@ -706,29 +934,16 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
         className="absolute inset-0 block w-full h-full pointer-events-none"
       />
 
-      {/* Central Typography Lockup — Unfolds in 3D, and cleanly erases/dissolves away as the user starts revealing */}
-      <div
-        className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center select-none transition-all duration-500 ease-out ${
-          userInteracted ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"
-        }`}
-        style={{
-          transform: "translateY(-16px)",
-        }}
-      >
-        {/* A. Decorative Top Eyebrow Badge with Flanking Rules */}
-        <div className="flex items-center justify-center gap-3 mb-2 md:mb-3">
-          <div className="h-[1px] w-8 md:w-16 bg-sky-200/40" />
-          <span className="font-mono text-[10px] md:text-xs font-semibold tracking-[0.22em] text-sky-200 uppercase">
-            ✦ &nbsp; P &amp; P &nbsp; S T U D I O &nbsp; · &nbsp; E S T . &nbsp; 2 0 2 6 &nbsp; ✦
-          </span>
-          <div className="h-[1px] w-8 md:w-16 bg-sky-200/40" />
-        </div>
-
-        {/* B. Main 3D Title: "P&P Studio" */}
+      {/* 3D Unfolding Title: Active during initial intro/reset; once finished, it bakes statically onto the canvas so cursor hover erases it */}
+      {!isFoldComplete && (
         <div
-          className="pointer-events-auto cursor-pointer"
-          onClick={() => setFoldKey((k) => k + 1)}
-          title="Click to unfold P&P Studio"
+          className="pointer-events-none absolute select-none flex items-center justify-center"
+          style={{
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%) translateY(-16px)",
+            willChange: "transform, opacity",
+          }}
         >
           <FoldText
             key={foldKey}
@@ -748,31 +963,13 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
             className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
             style={{
               fontFamily: '"Kraton", Georgia, serif',
-              letterSpacing: '0.02em',
-              whiteSpace: 'nowrap',
+              letterSpacing: "0.02em",
+              whiteSpace: "nowrap",
             }}
+            onComplete={handleFoldComplete}
           />
         </div>
-
-        {/* C. Decorative Diamond Flourish */}
-        <div className="flex items-center justify-center gap-2 mt-2 md:mt-3">
-          <div className="h-[1px] w-12 md:w-24 bg-sky-200/40" />
-          <div className="w-2 h-2 rotate-45 bg-sky-300 shadow-[0_0_8px_rgba(125,211,252,0.8)]" />
-          <div className="h-[1px] w-12 md:w-24 bg-sky-200/40" />
-        </div>
-
-        {/* D. Subtitle Pill Capsule */}
-        <div className="mt-3 md:mt-4 px-5 py-1.5 rounded-full bg-[#07122a]/70 border border-sky-200/35 backdrop-blur-sm shadow-lg shadow-black/20">
-          <span className="font-mono text-[11px] md:text-sm font-semibold tracking-[0.12em] text-sky-100 uppercase">
-            PANTH MISTRY &nbsp;·&nbsp; UI ARCHITECT &amp; AI DEVELOPER
-          </span>
-        </div>
-
-        {/* E. Interactive Hint */}
-        <p className="mt-2.5 md:mt-3.5 font-mono text-[9px] md:text-xs font-medium tracking-[0.10em] text-sky-100/85">
-          ✨ MOVE CURSOR TO ERASE WITH INK &nbsp;·&nbsp; SCROLL TO EXPAND ↓
-        </p>
-      </div>
+      )}
 
       {/* Dynamic Spring Brush Cursor Indicator (Luminous White on Blue) */}
       <div
