@@ -29,7 +29,6 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const [foldKey, setFoldKey] = useState(0);
-  const [isFoldComplete, setIsFoldComplete] = useState(false);
 
   // References for spring physics & smooth interpolation
   const pointerRef = useRef({
@@ -52,14 +51,12 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
   const previousPointRef = useRef<Point | null>(null);
   const lastDropletTimeRef = useRef(0);
+  const totalMoveDistanceRef = useRef(0);
   const isRevealedRef = useRef(false);
   isRevealedRef.current = isRevealed;
 
   const userInteractedRef = useRef(false);
   userInteractedRef.current = userInteracted;
-
-  const isFoldCompleteRef = useRef(false);
-  isFoldCompleteRef.current = isFoldComplete;
 
   // Fill canvas with luxury architectural "Design Flex" cover and prominent Kraton "P&P Studio" title
   const fillCover = useCallback(() => {
@@ -354,175 +351,14 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       ctx.fill();
     }
     ctx.restore();
-
-    // 6. MAIN TYPOGRAPHY LOCKUP (P&P Studio in Kraton font)
-    ctx.save();
-    // A. Decorative Top Eyebrow Badge with Flanking Rules
-    const badgeFontSize = Math.round(clamp(Math.min(cssWidth * 0.012, cssHeight * 0.022), 10, 13));
-    ctx.font = `600 ${badgeFontSize}px "JetBrains Mono", monospace`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#BAE6FD"; // Luminous sky blue
-    ctx.letterSpacing = "0.22em";
-    const badgeY = cy - (isMobile ? 64 : isCompactH ? 72 : 96);
-
-    // Flanking horizontal rules
-    const ruleW = isMobile ? 32 : isCompactH ? 48 : 80;
-    const badgeText = "✦   P & P   S T U D I O   ·   E S T .   2 0 2 6   ✦";
-    const badgeMetrics = ctx.measureText(badgeText);
-    const halfBadgeW = badgeMetrics.width / 2;
-
-    ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(cx - halfBadgeW - ruleW - 14, badgeY);
-    ctx.lineTo(cx - halfBadgeW - 14, badgeY);
-    ctx.moveTo(cx + halfBadgeW + 14, badgeY);
-    ctx.lineTo(cx + halfBadgeW + ruleW + 14, badgeY);
-    ctx.stroke();
-
-    ctx.fillText(badgeText, cx, badgeY);
-
-    // B. MAIN TITLE: "P&P Studio" is rendered dynamically by the 3D <FoldText /> component overlay
-    // with 3D folding hinges, paper crease shading, and character cascade animation.
-
-    // C. Decorative Diamond Flourish under title
-    const divY = cy + (isMobile ? 26 : isCompactH ? 32 : 44);
-    ctx.strokeStyle = "rgba(186, 230, 253, 0.40)";
-    ctx.lineWidth = 1;
-    const divW = isMobile ? 50 : isCompactH ? 70 : 100;
-    ctx.beginPath();
-    ctx.moveTo(cx - divW, divY);
-    ctx.lineTo(cx - 12, divY);
-    ctx.moveTo(cx + 12, divY);
-    ctx.lineTo(cx + divW, divY);
-    ctx.stroke();
-
-    // Central diamond
-    ctx.fillStyle = "#7DD3FC";
-    ctx.beginPath();
-    ctx.moveTo(cx, divY - 4);
-    ctx.lineTo(cx + 4, divY);
-    ctx.lineTo(cx, divY + 4);
-    ctx.lineTo(cx - 4, divY);
-    ctx.closePath();
-    ctx.fill();
-
-    // D. Subtitle Pill Capsule: "Panth Mistry · UI Architect & AI Developer"
-    const subFontSize = Math.round(clamp(Math.min(cssWidth * 0.013, cssHeight * 0.024), 11, 15));
-    ctx.font = `600 ${subFontSize}px "JetBrains Mono", monospace`;
-    ctx.letterSpacing = "0.12em";
-    const subText = "PANTH MISTRY  ·  UI ARCHITECT & AI DEVELOPER";
-    const subMetrics = ctx.measureText(subText);
-    const subY = cy + (isMobile ? 58 : isCompactH ? 66 : 84);
-    const pillPadX = 20;
-    const pillH = subFontSize + 14;
-
-    // Translucent dark-glass pill background
-    ctx.fillStyle = "rgba(7, 18, 42, 0.60)";
-    ctx.beginPath();
-    if (typeof ctx.roundRect === "function") {
-      ctx.roundRect(cx - subMetrics.width / 2 - pillPadX, subY - pillH / 2, subMetrics.width + pillPadX * 2, pillH, pillH / 2);
-    } else {
-      ctx.rect(cx - subMetrics.width / 2 - pillPadX, subY - pillH / 2, subMetrics.width + pillPadX * 2, pillH);
-    }
-    ctx.fill();
-
-    // Subtle cyan pill border
-    ctx.strokeStyle = "rgba(186, 230, 253, 0.35)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Subtitle text
-    ctx.fillStyle = "#E0F2FE";
-    ctx.fillText(subText, cx, subY);
-
-    // E. Interactive Instruction Pill Chip
-    const hintFontSize = Math.round(clamp(Math.min(cssWidth * 0.011, cssHeight * 0.02), 9, 12));
-    ctx.font = `500 ${hintFontSize}px "JetBrains Mono", monospace`;
-    ctx.letterSpacing = "0.10em";
-    ctx.fillStyle = "rgba(224, 242, 254, 0.85)";
-    const hintY = cy + (isMobile ? 96 : isCompactH ? 104 : 132);
-    ctx.fillText("✨ MOVE CURSOR TO ERASE WITH INK  ·  SCROLL TO EXPAND ↓", cx, hintY);
-
-    ctx.restore();
   }, []);
-
-  // Draw the exact matching "P&P Studio" title directly onto the canvas
-  // This allows the organic ink eraser to cut transparent holes right through the letters
-  const drawTitleToCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cssWidth = canvas.width / dpr;
-    const cssHeight = canvas.height / dpr;
-    const cx = cssWidth / 2;
-    const cy = cssHeight / 2;
-    const titleY = cy - 16;
-
-    // Font size matching FoldText: clamp(2.9rem, 9.2vw, 7.8rem)
-    const titleFontSize = Math.round(
-      clamp(Math.min(cssWidth * 0.092, cssHeight * 0.16), 46.4, 124.8)
-    );
-
-    ctx.save();
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.globalCompositeOperation = "source-over";
-
-    ctx.font = `normal ${titleFontSize}px "Kraton", Georgia, serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    if ("letterSpacing" in ctx) {
-      // @ts-ignore
-      ctx.letterSpacing = "0.02em";
-    }
-
-    // Pass 1: Luminous cyan atmospheric glow
-    ctx.shadowColor = "rgba(56, 189, 248, 0.75)";
-    ctx.shadowBlur = 35;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("P&P Studio", cx, titleY);
-
-    // Pass 2: Deep obsidian drop shadow
-    ctx.shadowColor = "rgba(7, 15, 35, 0.75)";
-    ctx.shadowBlur = 18;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 6;
-    ctx.fillText("P&P Studio", cx, titleY);
-
-    // Pass 3: Ultra-crisp razor white core
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText("P&P Studio", cx, titleY);
-
-    ctx.restore();
-  }, []);
-
-  // Called when FoldText finishes its initial 3D unfolding animation
-  const handleFoldComplete = useCallback(() => {
-    if (!isFoldCompleteRef.current) {
-      isFoldCompleteRef.current = true;
-      setIsFoldComplete(true);
-      drawTitleToCanvas();
-    }
-  }, [drawTitleToCanvas]);
 
   // Manual Reset of the blueprint ink cover & re-triggering fold animation
   const handleResetCover = useCallback(() => {
-    isFoldCompleteRef.current = false;
-    setIsFoldComplete(false);
+    setUserInteracted(false);
+    totalMoveDistanceRef.current = 0;
     fillCover();
     setIsRevealed(false);
-    setUserInteracted(false);
-    userInteractedRef.current = false;
     setFoldKey((k) => k + 1);
   }, [fillCover]);
 
@@ -684,9 +520,6 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       fillCover();
-      if (isFoldCompleteRef.current) {
-        drawTitleToCanvas();
-      }
     };
 
     handleResize();
@@ -700,9 +533,6 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     const redrawIfClean = () => {
       if (!isRevealedRef.current && !userInteractedRef.current) {
         fillCover();
-        if (isFoldCompleteRef.current) {
-          drawTitleToCanvas();
-        }
       }
     };
 
@@ -719,38 +549,33 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
     const handlePointerMove = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
 
-      // If user starts interacting before fold timeline finishes, immediately bake to canvas so erasing cuts through title
-      if (!isFoldCompleteRef.current) {
-        isFoldCompleteRef.current = true;
-        setIsFoldComplete(true);
-        drawTitleToCanvas();
-      }
-
       const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
 
-      pointerRef.current.targetX = clientX;
-      pointerRef.current.targetY = clientY;
-      pointerRef.current.active = true;
-
-      if (!pointerRef.current.initialized) {
+      if (pointerRef.current.initialized) {
+        const dx = clientX - pointerRef.current.targetX;
+        const dy = clientY - pointerRef.current.targetY;
+        totalMoveDistanceRef.current += Math.hypot(dx, dy);
+        if (totalMoveDistanceRef.current > 20) {
+          setUserInteracted(true);
+          userInteractedRef.current = true;
+        }
+      } else {
         pointerRef.current.initialized = true;
         brushRef.current.x = clientX;
         brushRef.current.y = clientY;
       }
 
-      setUserInteracted(true);
-      userInteractedRef.current = true;
+      pointerRef.current.targetX = clientX;
+      pointerRef.current.targetY = clientY;
+      pointerRef.current.active = true;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
       if (isRevealedRef.current) return;
-      if (!isFoldCompleteRef.current) {
-        isFoldCompleteRef.current = true;
-        setIsFoldComplete(true);
-        drawTitleToCanvas();
-      }
+      setUserInteracted(true);
+      userInteractedRef.current = true;
       handlePointerMove(e);
 
       // Instant splash on click
@@ -854,7 +679,7 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
       container.removeEventListener("pointerdown", handlePointerDown);
       container.removeEventListener("pointerleave", handlePointerLeave);
     };
-  }, [containerRef, drawOrganicStamp, drawTitleToCanvas, fillCover, paintBetween]);
+  }, [containerRef, drawOrganicStamp, fillCover, paintBetween]);
 
   // Handle Reveal All
   const handleRevealAll = () => {
@@ -881,45 +706,73 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
         className="absolute inset-0 block w-full h-full pointer-events-none"
       />
 
-      {/* 3D FoldText Title Overlay: "P&P Studio" - unfolds in 3D, then bakes to canvas so ink erasing cuts through it */}
-      {!isFoldComplete && (
-        <div
-          className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
-          style={{
-            transform: "translateY(-16px)",
-          }}
-        >
-          <div
-            className="pointer-events-auto cursor-pointer"
-            onClick={() => setFoldKey((k) => k + 1)}
-            title="Click to unfold P&P Studio"
-          >
-            <FoldText
-              key={foldKey}
-              text="P&P Studio"
-              splitBy="char"
-              hinge="top"
-              trigger="mount"
-              replayOnHover={false}
-              duration={0.8}
-              stagger={0.06}
-              ease="power3.out"
-              perspective={800}
-              creaseShading={0.55}
-              fontSize="clamp(2.9rem, 9.2vw, 7.8rem)"
-              fontWeight={400}
-              color="#FFFFFF"
-              className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
-              style={{
-                fontFamily: '"Kraton", Georgia, serif',
-                letterSpacing: '0.02em',
-                whiteSpace: 'nowrap',
-              }}
-              onComplete={handleFoldComplete}
-            />
-          </div>
+      {/* Central Typography Lockup — Unfolds in 3D, and cleanly erases/dissolves away as the user starts revealing */}
+      <div
+        className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center select-none transition-all duration-500 ease-out ${
+          userInteracted ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"
+        }`}
+        style={{
+          transform: "translateY(-16px)",
+        }}
+      >
+        {/* A. Decorative Top Eyebrow Badge with Flanking Rules */}
+        <div className="flex items-center justify-center gap-3 mb-2 md:mb-3">
+          <div className="h-[1px] w-8 md:w-16 bg-sky-200/40" />
+          <span className="font-mono text-[10px] md:text-xs font-semibold tracking-[0.22em] text-sky-200 uppercase">
+            ✦ &nbsp; P &amp; P &nbsp; S T U D I O &nbsp; · &nbsp; E S T . &nbsp; 2 0 2 6 &nbsp; ✦
+          </span>
+          <div className="h-[1px] w-8 md:w-16 bg-sky-200/40" />
         </div>
-      )}
+
+        {/* B. Main 3D Title: "P&P Studio" */}
+        <div
+          className="pointer-events-auto cursor-pointer"
+          onClick={() => setFoldKey((k) => k + 1)}
+          title="Click to unfold P&P Studio"
+        >
+          <FoldText
+            key={foldKey}
+            text="P&P Studio"
+            splitBy="char"
+            hinge="top"
+            trigger="mount"
+            replayOnHover={false}
+            duration={0.8}
+            stagger={0.06}
+            ease="power3.out"
+            perspective={800}
+            creaseShading={0.55}
+            fontSize="clamp(2.9rem, 9.2vw, 7.8rem)"
+            fontWeight={400}
+            color="#FFFFFF"
+            className="font-display tracking-tight text-center drop-shadow-[0_6px_18px_rgba(7,15,35,0.75)] drop-shadow-[0_0_35px_rgba(56,189,248,0.75)]"
+            style={{
+              fontFamily: '"Kraton", Georgia, serif',
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            }}
+          />
+        </div>
+
+        {/* C. Decorative Diamond Flourish */}
+        <div className="flex items-center justify-center gap-2 mt-2 md:mt-3">
+          <div className="h-[1px] w-12 md:w-24 bg-sky-200/40" />
+          <div className="w-2 h-2 rotate-45 bg-sky-300 shadow-[0_0_8px_rgba(125,211,252,0.8)]" />
+          <div className="h-[1px] w-12 md:w-24 bg-sky-200/40" />
+        </div>
+
+        {/* D. Subtitle Pill Capsule */}
+        <div className="mt-3 md:mt-4 px-5 py-1.5 rounded-full bg-[#07122a]/70 border border-sky-200/35 backdrop-blur-sm shadow-lg shadow-black/20">
+          <span className="font-mono text-[11px] md:text-sm font-semibold tracking-[0.12em] text-sky-100 uppercase">
+            PANTH MISTRY &nbsp;·&nbsp; UI ARCHITECT &amp; AI DEVELOPER
+          </span>
+        </div>
+
+        {/* E. Interactive Hint */}
+        <p className="mt-2.5 md:mt-3.5 font-mono text-[9px] md:text-xs font-medium tracking-[0.10em] text-sky-100/85">
+          ✨ MOVE CURSOR TO ERASE WITH INK &nbsp;·&nbsp; SCROLL TO EXPAND ↓
+        </p>
+      </div>
 
       {/* Dynamic Spring Brush Cursor Indicator (Luminous White on Blue) */}
       <div
