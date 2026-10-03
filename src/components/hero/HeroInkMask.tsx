@@ -916,9 +916,9 @@ export const HeroInkMask: React.FC<HeroInkMaskProps> = ({
 
   // Smooth fade only when intentionally scrolling down to expand
   const autoFadeFromScroll =
-    scrollProgress < 0.05 ? 1 : Math.max(0, 1 - (scrollProgress - 0.05) * 4);
+    scrollProgress < 0.08 ? 1 : Math.max(0, 1 - (scrollProgress - 0.08) * 2.8);
   const opacity = isRevealed ? 0 : autoFadeFromScroll;
-  const pointerEvents = isRevealed || scrollProgress > 0.08 ? "none" : "auto";
+  const pointerEvents = isRevealed || scrollProgress > 0.12 ? "none" : "auto";
 
   return (
     <div

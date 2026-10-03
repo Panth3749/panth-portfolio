@@ -278,8 +278,8 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-[#DCE6F2] via-[#AEC2D8] to-[#7A95B5]">
       {/* Main Expansion Hero Stage (Pinned Sticky Scroll Track) */}
-      <section id="scroll-expand-hero" ref={sectionRef} className="relative w-full h-[220vh]">
-        <div ref={stickyRef} className="sticky top-0 relative w-full h-screen overflow-hidden">
+      <section id="scroll-expand-hero" ref={sectionRef} className="relative w-full h-[240vh]">
+        <div ref={stickyRef} className="sticky top-0 w-full h-screen overflow-hidden">
         {/* Ambient Soft Warm & Sky Blue Glows */}
         <div
           ref={bgOverlayRef}

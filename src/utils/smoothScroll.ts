@@ -11,13 +11,22 @@ export const initSmoothScroll = (): Lenis => {
   if (lenisInstance) return lenisInstance;
 
   lenisInstance = new Lenis({
-    duration: 1.1,
-    easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // exponential easing
+    lerp: 0.09,
     orientation: 'vertical',
     gestureOrientation: 'vertical',
     smoothWheel: true,
-    wheelMultiplier: 1.0,
-    touchMultiplier: 1.5,
+    wheelMultiplier: 0.65,
+    touchMultiplier: 0.85,
+    syncTouch: true,
+    syncTouchLerp: 0.09,
+    virtualScroll: (data) => {
+      // Prevent single high-velocity flick or free-wheeling scroll from skipping through the page
+      const maxDelta = 110;
+      if (Math.abs(data.deltaY) > maxDelta) {
+        data.deltaY = Math.sign(data.deltaY) * maxDelta;
+      }
+      return true;
+    },
   });
 
   // Re-attach registered scroll handlers to this living Lenis instance
