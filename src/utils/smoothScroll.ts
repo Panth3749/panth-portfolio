@@ -34,6 +34,10 @@ export const initSmoothScroll = (): Lenis => {
 
   rafId = requestAnimationFrame(raf);
 
+  if (typeof window !== 'undefined') {
+    (window as any).__lenis = lenisInstance;
+  }
+
   return lenisInstance;
 };
 

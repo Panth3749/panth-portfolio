@@ -15,132 +15,9 @@ import {
 import { LensReveal } from './LensReveal';
 import { personalProfile } from '../../data/portfolioData';
 import { subscribeScroll, scrollTo } from '../../utils/smoothScroll';
-import './AboutSection.css';
 
 interface AboutSectionProps {
   onOpenProfile?: () => void;
-}
-
-interface AboutCardData {
-  icon: string;
-  title: string;
-  description: string;
-  footer: string;
-  type: string;
-  target?: boolean;
-}
-
-const cards: AboutCardData[] = [
-  {
-    icon: "</>",
-    title: "Foundations from Scratch",
-    description:
-      "I believe software engineering starts with fundamental understanding. Instead of relying on third-party frameworks, I build systems from the ground up.",
-    footer: "Vanilla JS · Canvas 2D · Collision Math",
-    type: "code",
-  },
-  {
-    icon: "◉",
-    title: "Applied Mobile & Systems",
-    description:
-      "Engineered native Android systems in Java with cloud-synced databases and automated pipelines for practical real-world problems.",
-    footer: "Native Android · Java · Firebase DB",
-    type: "mobile",
-  },
-  {
-    icon: "⦿",
-    title: "AI & Neural Architectures",
-    description:
-      "Exploring modern AI systems, reasoning agents, Gemini technologies, and intelligent pipelines for next-generation machine intelligence.",
-    footer: "B.Tech in AI Bound · Gemini Labs · GLSL",
-    type: "ai",
-    target: true,
-  },
-];
-
-function Particles() {
-  const [particles] = useState(() =>
-    Array.from({ length: 30 }, (_, index) => ({
-      id: index,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      duration: `${6 + Math.random() * 8}s`,
-      delay: `${Math.random() * 5}s`,
-      size: `${2 + Math.random() * 3}px`,
-    }))
-  );
-
-  return (
-    <div className="particles">
-      {particles.map((particle) => (
-        <span
-          key={particle.id}
-          className="particle"
-          style={{
-            left: particle.left,
-            top: particle.top,
-            width: particle.size,
-            height: particle.size,
-            animationDuration: particle.duration,
-            animationDelay: particle.delay,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-interface AboutCardProps {
-  card: AboutCardData;
-  index: number;
-}
-
-function AboutCard({ card, index }: AboutCardProps) {
-  const handleMove = (e: React.MouseEvent<HTMLElement>) => {
-    const cardElement = e.currentTarget;
-    const rect = cardElement.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const rotateX = ((y / rect.height) - 0.5) * -6;
-    const rotateY = ((x / rect.width) - 0.5) * 6;
-
-    cardElement.style.transform = `
-      translateY(-12px)
-      perspective(1000px)
-      rotateX(${rotateX}deg)
-      rotateY(${rotateY}deg)
-      scale(1.015)
-    `;
-  };
-
-  const handleLeave = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.transform = "";
-  };
-
-  return (
-    <article
-      className={`about-card card-${index + 1}`}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-    >
-      <div className="card-glow" />
-
-      {/* Icon */}
-      <div className="card-icon">{card.icon}</div>
-
-      {card.target && <div className="target-badge">TARGET</div>}
-
-      <h2>{card.title}</h2>
-
-      <p>{card.description}</p>
-
-      <div className="card-footer">
-        <span className="footer-dot" />
-        {card.footer}
-      </div>
-    </article>
-  );
 }
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -181,61 +58,12 @@ const pillars = [
 ];
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ onOpenProfile }) => {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const ribbonRef = useRef<HTMLDivElement | null>(null);
-  const gridRef = useRef<HTMLDivElement | null>(null);
-  const lightRef = useRef<HTMLDivElement | null>(null);
-
   const trackRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const progressTextRef = useRef<HTMLSpanElement>(null);
   const statusTextRef = useRef<HTMLSpanElement>(null);
   const stageCardRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
-
-  // Mouse tracking parallax for background grid, ribbon, and cursor light
-  useEffect(() => {
-    const section = sectionRef.current;
-    const ribbon = ribbonRef.current;
-    const grid = gridRef.current;
-    const light = lightRef.current;
-    if (!section || !ribbon || !grid || !light) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = section.getBoundingClientRect();
-
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const normalizedX = x / rect.width - 0.5;
-      const normalizedY = y / rect.height - 0.5;
-
-      light.style.left = `${x}px`;
-      light.style.top = `${y}px`;
-
-      ribbon.style.transform = `
-        translate3d(
-          ${normalizedX * 18}px,
-          ${normalizedY * 12}px,
-          0
-        )
-      `;
-
-      grid.style.transform = `
-        translate3d(
-          ${normalizedX * 6}px,
-          ${normalizedY * 6}px,
-          0
-        )
-      `;
-    };
-
-    section.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      section.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
 
   // Passive event-driven scroll progress updates for the pinned lens track
   useEffect(() => {
@@ -307,127 +135,124 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ onOpenProfile }) => 
   return (
     <div className="relative w-full text-slate-800">
       {/* ──────────────────────────────────────────────────────────── */}
-      {/* Part 1: More About Me Storytelling Grid with 3D Ribbon & Mesh */}
+      {/* Part 1: More About Me Storytelling Grid                      */}
       {/* ──────────────────────────────────────────────────────────── */}
-      <section id="about" className="about-section" ref={sectionRef}>
-        {/* Background */}
-        <div className="about-grid" ref={gridRef} />
+      <section id="about" className="pt-20 sm:pt-28 pb-12 sm:pb-16 relative overflow-hidden">
+        {/* Ambient Blue & White Gradient Light Orbs & Grid Mesh */}
+        <div className="absolute top-0 right-1/4 w-[650px] h-[650px] bg-gradient-to-br from-blue-400/20 via-sky-300/25 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-[600px] h-[600px] bg-gradient-to-tr from-blue-600/15 via-sky-400/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        <div className="about-glow about-glow-one" />
-        <div className="about-glow about-glow-two" />
+        {/* Blueprint Dot Matrix Pattern */}
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(rgba(37, 99, 235, 0.18) 1.2px, transparent 1.2px)",
+            backgroundSize: "32px 32px",
+            maskImage: "linear-gradient(to bottom, transparent 0%, black 200px)",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 200px)",
+          }}
+        />
 
-        {/* Cursor glow */}
-        <div className="about-mouse-light" ref={lightRef} />
-
-        {/* Animated ribbon */}
-        <div className="about-ribbon" ref={ribbonRef}>
-          <svg viewBox="0 0 1600 900" preserveAspectRatio="none">
-            <defs>
-              <linearGradient
-                id="ribbonGradient"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
-              >
-                <stop offset="0%" stopColor="#006dff" />
-                <stop offset="35%" stopColor="#12cfff" />
-                <stop offset="65%" stopColor="#4f7cff" />
-                <stop offset="100%" stopColor="#2445d8" />
-              </linearGradient>
-
-              <filter id="ribbonBlur">
-                <feGaussianBlur stdDeviation="12" />
-              </filter>
-            </defs>
-
-            {/* Soft ribbon shadow */}
-            <path
-              className="ribbon-path ribbon-soft"
-              d="
-                M -150 720
-                C 220 420,
-                  430 850,
-                  700 590
-                S 1050 180,
-                  1350 390
-                S 1580 560,
-                  1800 180
-              "
-            />
-
-            {/* Main ribbon */}
-            <path
-              className="ribbon-path ribbon-main"
-              d="
-                M -150 720
-                C 220 420,
-                  430 850,
-                  700 590
-                S 1050 180,
-                  1350 390
-                S 1580 560,
-                  1800 180
-              "
-            />
-
-            {/* Ribbon highlight */}
-            <path
-              className="ribbon-path ribbon-highlight"
-              d="
-                M -150 720
-                C 220 420,
-                  430 850,
-                  700 590
-                S 1050 180,
-                  1350 390
-                S 1580 560,
-                  1800 180
-              "
-            />
-          </svg>
-        </div>
-
-        {/* Particles */}
-        <Particles />
-
-        {/* Main content */}
-        <div className="about-container">
-          {/* Label */}
-          <div className="about-label">
-            <span className="label-dot" />
-            <span>01 // ABOUT PANTH MISTRY · THE STORY &amp; CRAFT</span>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10 sm:space-y-14">
           {/* Header */}
-          <div className="about-header">
-            <div className="about-heading-wrapper">
-              <h1 className="about-heading">
-                Driven by Logic,
-                <span>Engineered with Rigor.</span>
-              </h1>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b border-sky-200/70 pb-8">
+            <div className="max-w-2xl space-y-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-sky-300 text-blue-950 text-xs font-mono uppercase tracking-widest backdrop-blur-md shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                <span className="font-bold">01 // ABOUT PANTH MISTRY · THE STORY &amp; CRAFT</span>
+              </div>
 
-              <p className="about-description">
-                Turning ideas into real-world solutions through code, systems,
-                and intelligent design.
-              </p>
+              <h2 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-slate-900 tracking-tight leading-[1.08]">
+                Driven by Logic,{" "}
+                <span className="bg-gradient-to-r from-blue-700 via-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                  Engineered with Rigor.
+                </span>
+              </h2>
             </div>
 
-            <button
-              type="button"
-              className="profile-button"
-              onClick={onOpenProfile}
-            >
-              <span>View Full Architect Profile</span>
-              <span className="button-arrow">&rarr;</span>
-            </button>
+            {onOpenProfile && (
+              <button
+                onClick={onOpenProfile}
+                className="self-start lg:self-end inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs font-semibold shadow-md shadow-blue-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <span>View Full Architect Profile</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          {/* Cards */}
-          <div className="about-cards">
-            {cards.map((card, index) => (
-              <AboutCard key={card.title} card={card} index={index} />
-            ))}
+          {/* Storytelling Narrative Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Origins & Foundations */}
+            <div className="p-7 rounded-3xl bg-white/90 border border-sky-200/80 shadow-lg shadow-blue-950/5 backdrop-blur-xl flex flex-col justify-between hover:shadow-xl hover:border-sky-300 transition-all">
+              <div className="space-y-4">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-sky-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25">
+                  <Code2 className="w-5 h-5" />
+                </div>
+
+                <h3 className="font-display font-bold text-xl text-slate-900">
+                  Foundations from Scratch
+                </h3>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                  I believe software engineering starts with fundamental understanding. Instead of relying on third-party frameworks, I built 2D game loops with custom AABB collision mathematics and enemy AI state machines from scratch in Vanilla JavaScript.
+                </p>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-sky-100 flex items-center gap-2 text-xs font-mono text-blue-700 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                <span>Vanilla JS &bull; Canvas 2D &bull; Collision Math</span>
+              </div>
+            </div>
+
+            {/* Card 2: Systems & Applied Production */}
+            <div className="p-7 rounded-3xl bg-white/90 border border-sky-200/80 shadow-lg shadow-blue-950/5 backdrop-blur-xl flex flex-col justify-between hover:shadow-xl hover:border-sky-300 transition-all">
+              <div className="space-y-4">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-400 text-white flex items-center justify-center shadow-md shadow-sky-500/25">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+
+                <h3 className="font-display font-bold text-xl text-slate-900">
+                  Applied Mobile &amp; Systems
+                </h3>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                  Engineered native Android systems in Java and cloud-synced databases with Firebase. Designed automated push pipelines and vehicle service maintenance logs to solve tangible, real-world utility problems with zero bloat.
+                </p>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-sky-100 flex items-center gap-2 text-xs font-mono text-blue-700 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+                <span>Native Android &bull; Java &bull; Firebase DB</span>
+              </div>
+            </div>
+
+            {/* Card 3: The Next Horizon (AI & Shaders) */}
+            <div className="p-7 rounded-3xl bg-gradient-to-br from-white/95 via-sky-50/70 to-blue-50/50 border-2 border-sky-300/80 shadow-xl shadow-blue-500/10 backdrop-blur-xl flex flex-col justify-between hover:shadow-2xl hover:border-sky-400 transition-all">
+              <div className="space-y-4">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-600/25">
+                  <Brain className="w-5 h-5" />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-bold text-xl text-slate-900">
+                    AI &amp; Neural Architectures
+                  </h3>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-600 text-white font-bold tracking-wider">
+                    Target
+                  </span>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                  Currently exploring Google Gemini Labs, automated prompt reasoning agents, and WebGL shader pipelines. Preparing for a B.Tech in Artificial Intelligence to build next-generation machine intelligence platforms.
+                </p>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-sky-200/80 flex items-center gap-2 text-xs font-mono text-blue-800 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
+                <span>B.Tech in AI Bound &bull; Gemini Labs &bull; GLSL</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

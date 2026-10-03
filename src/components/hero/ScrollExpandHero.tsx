@@ -22,7 +22,7 @@ import { personalProfile, ferrofluidPresets } from "../../data/portfolioData";
 import { FerrofluidPreset } from "../../types";
 import { GithubIcon, LinkedinIcon } from "../icons/SocialIcons";
 import { subscribeScroll, scrollTo } from "../../utils/smoothScroll";
-import { Lightfall } from "../background/Lightfall";
+import AeroShards from "../background/AeroShards";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -630,12 +630,12 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       </section>
 
       {/* ──────────────────────────────────────────────────────────── */}
-      {/* Post-Ferrofluid Animated Lightfall Background               */}
+      {/* Post-Hero GPU Wind Sculpture Background (AeroShards)       */}
       {/* ──────────────────────────────────────────────────────────── */}
       <div ref={postHeroRef} className="relative z-20">
-        {/* Seamless atmospheric gradient bridge from Hero into Lightfall */}
+        {/* Seamless atmospheric gradient bridge from Hero into AeroShards */}
         <div
-          className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#DCE6F2]/80 to-transparent"
+          className="absolute -top-1 left-0 right-0 h-80 sm:h-96 pointer-events-none z-10 bg-gradient-to-b from-[#EDF4FB] via-[#d5efff]/80 to-transparent"
           aria-hidden="true"
         />
 
@@ -645,15 +645,15 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           aria-hidden="true"
         />
 
-        {/* Persistent static glowing aura backdrop behind the Lightfall canvas */}
+        {/* Persistent static glowing aura backdrop behind AeroShards canvas */}
         <div
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden flex items-center justify-center"
           aria-hidden="true"
         >
-          <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.22)_0%,rgba(100,135,175,0.18)_45%,transparent_75%)] blur-3xl" />
+          <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.22)_0%,rgba(99,102,241,0.18)_45%,transparent_75%)] blur-3xl" />
         </div>
 
-        {/* Sticky Lightfall WebGL Canvas: stays locked in viewport with smooth top fade mask */}
+        {/* Sticky AeroShards WebGL/WebGPU Canvas: stays locked in viewport with smooth top fade mask */}
         <div
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden"
           style={{
@@ -663,20 +663,36 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
               "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 60px, rgba(0,0,0,0.2) 160px, rgba(0,0,0,0.7) 320px, black 500px)",
           }}
         >
-          <Lightfall
+          <AeroShards
             className="w-full h-full"
-            paused={!isPostHeroVisible}
-            theme="light"
-            backgroundColor="#8FA6BF"
-            speed={0.45}
-            streakCount={5}
-            streakWidth={1.8}
-            streakLength={2.2}
-            glow={1.25}
-            staticGlow={0.9}
-            density={0.65}
-            backgroundGlow={0.35}
-            mouseInteraction={true}
+            backgroundColor="#d5efff"
+            shardColor="#3B82F6"
+            accentColor="#6366F1"
+            placement="full"
+            flow="stream"
+            material="pearl"
+            detail="balanced"
+            effect="none"
+            scale={2.05}
+            spread={1.1}
+            depth={0.8}
+            speed={0.4}
+            spin={1}
+            interaction="repel"
+            density={1.5}
+            shardSize={1.1}
+            stretch={1}
+            turbulence={1}
+            glow={1}
+            edgeSoftness={2}
+            bloom={1.45}
+            grain={0.05}
+            chromaticAberration={0.0075}
+            transitionDuration={0.2}
+            interactionRadius={1.35}
+            interactionStrength={0}
+            rippleIntensity={1.95}
+            holdToGather={true}
           />
         </div>
 
