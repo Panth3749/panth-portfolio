@@ -30,6 +30,7 @@ type TileUpdate = {
 export interface SplitFlapTextProps extends HTMLAttributes<HTMLDivElement> {
   words?: string[];
   text?: string;
+  trigger?: boolean;
   flipDuration?: number;
   stagger?: number;
   cycleDelay?: number;
@@ -104,6 +105,7 @@ const usePrefersReducedMotion = () => {
 const SplitFlapText = ({
   words = ['LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE'],
   text,
+  trigger,
   flipDuration = 0.12,
   stagger = 0.06,
   cycleDelay = 2400,
@@ -127,6 +129,8 @@ const SplitFlapText = ({
   const animateToRef = useRef<((phrase: string, force?: boolean) => number) | null>(null);
   const isAnimatingRef = useRef(false);
 
+  const hasTrigger = typeof trigger === 'boolean';
+
   const sourceWords = Array.isArray(words) && words.length > 0 ? words : DEFAULT_WORDS;
   const phrasesKey = typeof text === 'string'
     ? text.toUpperCase()
@@ -140,7 +144,13 @@ const SplitFlapText = ({
 
   const normalizedPhrases = useMemo(() => phrases.map(phrase => normalizePhrase(phrase, width)), [phrases, width]);
 
-  const [tiles, setTiles] = useState<TileState[]>(() => createTiles(normalizedPhrases[0] || ''));
+  const [tiles, setTiles] = useState<TileState[]>(() => {
+    if (hasTrigger && !trigger) {
+      const initialWidth = Math.max(1, Math.ceil(Number(padTo) || 0), phrases[0]?.length || 1);
+      return createTiles(' '.repeat(initialWidth));
+    }
+    return createTiles(normalizedPhrases[0] || '');
+  });
 
   useEffect(() => {
     const clearAnimation = () => {
@@ -153,15 +163,22 @@ const SplitFlapText = ({
         clearTimeout(cycleTimerRef.current);
         cycleTimerRef.current = null;
       }
+      isAnimatingRef.current = false;
     };
 
     clearAnimation();
 
     const firstPhrase = normalizedPhrases[0] || '';
-    currentTextRef.current = firstPhrase;
-    setTiles(createTiles(firstPhrase));
+    const blankPhrase = ' '.repeat(width);
 
     if (typeof window === 'undefined') {
+      return clearAnimation;
+    }
+
+    // When controlled by trigger prop and trigger is false, stay blank and dormant
+    if (hasTrigger && !trigger) {
+      currentTextRef.current = blankPhrase;
+      setTiles(createTiles(blankPhrase));
       return clearAnimation;
     }
 
@@ -302,7 +319,7 @@ const SplitFlapText = ({
         if (!cancelled) {
           animateTo(firstPhrase, true);
         }
-      }, 100);
+      }, hasTrigger ? 60 : 100);
 
       return () => {
         cancelled = true;
@@ -331,7 +348,7 @@ const SplitFlapText = ({
       cancelled = true;
       clearAnimation();
     };
-  }, [normalizedPhrases, width, loop, cycleDelay, flipDuration, stagger, flipsPerChar, charset, prefersReducedMotion]);
+  }, [normalizedPhrases, width, loop, cycleDelay, flipDuration, stagger, flipsPerChar, charset, prefersReducedMotion, hasTrigger, trigger]);
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     props.onMouseEnter?.(e);

@@ -107,6 +107,8 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const bgOverlayRef = useRef<HTMLDivElement | null>(null);
   const expandedInfoRef = useRef<HTMLDivElement | null>(null);
+  const [heroTitleActive, setHeroTitleActive] = useState(false);
+  const heroTitleActiveRef = useRef(false);
 
   // Target and current progress references for exponential physics lerp
   const targetProgressRef = useRef(0);
@@ -197,6 +199,15 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           expandedInfoRef.current.style.pointerEvents = infoOp > 0.75 ? "auto" : "none";
         }
 
+        // Trigger mechanical SplitFlapText when coming into view (re-arms when scrolling back up)
+        if (p >= 0.42 && !heroTitleActiveRef.current) {
+          heroTitleActiveRef.current = true;
+          setHeroTitleActive(true);
+        } else if (p < 0.15 && heroTitleActiveRef.current) {
+          heroTitleActiveRef.current = false;
+          setHeroTitleActive(false);
+        }
+
         // 7. Transition into unlocked page scroll
         if (p >= 0.99 && target >= 0.99) {
           currentProgressRef.current = 1;
@@ -226,6 +237,8 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
       targetProgressRef.current = 1;
       currentProgressRef.current = 1;
       expandedRef.current = true;
+      heroTitleActiveRef.current = true;
+      setHeroTitleActive(true);
 
       const heroEl = sectionRef.current;
       if (heroEl) {
@@ -379,6 +392,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           fontSize={58}
                           loop={false}
                           padTo={12}
+                          trigger={heroTitleActive}
                         />
                       </div>
 
@@ -511,6 +525,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           fontSize={58}
                           loop={false}
                           padTo={12}
+                          trigger={heroTitleActive}
                         />
                       </div>
                       <p className="text-xs sm:text-sm md:text-base text-slate-700 max-w-2xl mx-auto font-normal leading-relaxed">
@@ -580,6 +595,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           fontSize={58}
                           loop={false}
                           padTo={12}
+                          trigger={heroTitleActive}
                         />
                       </div>
                       <p className="text-xs sm:text-sm md:text-base text-slate-700 max-w-2xl mx-auto font-normal leading-relaxed">
