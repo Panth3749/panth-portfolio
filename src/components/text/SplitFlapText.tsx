@@ -124,9 +124,13 @@ const SplitFlapText = ({
   const rafRef = useRef<number | null>(null);
   const cycleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentTextRef = useRef('');
+  const animateToRef = useRef<((phrase: string, force?: boolean) => number) | null>(null);
+  const isAnimatingRef = useRef(false);
 
   const sourceWords = Array.isArray(words) && words.length > 0 ? words : DEFAULT_WORDS;
-  const phrasesKey = typeof text === 'string' ? text : sourceWords.map(word => String(word ?? '')).join('\u001f');
+  const phrasesKey = typeof text === 'string'
+    ? text.toUpperCase()
+    : sourceWords.map(word => String(word ?? '').toUpperCase()).join('\u001f');
   const phrases = useMemo(() => phrasesKey.split('\u001f'), [phrasesKey]);
 
   const width = useMemo(() => {
@@ -157,7 +161,7 @@ const SplitFlapText = ({
     currentTextRef.current = firstPhrase;
     setTiles(createTiles(firstPhrase));
 
-    if (normalizedPhrases.length <= 1 || typeof window === 'undefined') {
+    if (typeof window === 'undefined') {
       return clearAnimation;
     }
 
@@ -170,20 +174,23 @@ const SplitFlapText = ({
     const safeFlips = Math.max(0, Math.floor(Number(flipsPerChar) || 0));
     const activeCharset = resolveCharset(charset);
 
-    const animateTo = (targetPhrase: string) => {
+    const animateTo = (targetPhrase: string, force = false): number => {
       if (prefersReducedMotion) {
         currentTextRef.current = targetPhrase;
         setTiles(createTiles(targetPhrase));
+        isAnimatingRef.current = false;
         return 0;
       }
 
+      isAnimatingRef.current = true;
       const fromPhrase = normalizePhrase(currentTextRef.current, width);
       const targetChars = targetPhrase.split('');
 
       const plans = targetChars
         .map<AnimationPlan | null>((targetChar, index) => {
           const fromChar = fromPhrase[index] || ' ';
-          if (fromChar === targetChar) return null;
+          if (!force && fromChar === targetChar) return null;
+          if (force && targetChar === ' ' && fromChar === ' ') return null;
 
           return {
             index,
@@ -200,6 +207,7 @@ const SplitFlapText = ({
       if (!plans.length) {
         currentTextRef.current = targetPhrase;
         setTiles(createTiles(targetPhrase));
+        isAnimatingRef.current = false;
         return 0;
       }
 
@@ -274,12 +282,34 @@ const SplitFlapText = ({
         } else {
           currentTextRef.current = targetPhrase;
           rafRef.current = null;
+          isAnimatingRef.current = false;
         }
       };
 
       rafRef.current = requestAnimationFrame(tick);
       return totalDuration;
     };
+
+    animateToRef.current = animateTo;
+
+    // Single phrase: Start blank and animate once to reveal the word, then become static!
+    if (normalizedPhrases.length <= 1) {
+      const blankPhrase = ' '.repeat(width);
+      currentTextRef.current = blankPhrase;
+      setTiles(createTiles(blankPhrase));
+
+      const mountTimer = window.setTimeout(() => {
+        if (!cancelled) {
+          animateTo(firstPhrase, true);
+        }
+      }, 100);
+
+      return () => {
+        cancelled = true;
+        clearTimeout(mountTimer);
+        clearAnimation();
+      };
+    }
 
     const scheduleNext = (delay: number) => {
       cycleTimerRef.current = window.setTimeout(() => {
@@ -303,6 +333,13 @@ const SplitFlapText = ({
     };
   }, [normalizedPhrases, width, loop, cycleDelay, flipDuration, stagger, flipsPerChar, charset, prefersReducedMotion]);
 
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    props.onMouseEnter?.(e);
+    if (!prefersReducedMotion && animateToRef.current && !isAnimatingRef.current) {
+      animateToRef.current(normalizedPhrases[0], true);
+    }
+  };
+
   const settledText = tiles
     .map(tile => tile.current)
     .join('')
@@ -319,10 +356,11 @@ const SplitFlapText = ({
 
   return (
     <div
-      className={`split-flap-text ${className}`.trim()}
+      className={`split-flap-text cursor-pointer transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99] ${className}`.trim()}
       style={componentStyle}
       role="text"
       aria-label={settledText || undefined}
+      onMouseEnter={handleMouseEnter}
       {...props}
     >
       {tiles.map((tile, index) => (

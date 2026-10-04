@@ -358,10 +358,10 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                         <span className="font-semibold">ASPIRING AI DEVELOPER &amp; COMPUTER SCIENCE ENGINEER</span>
                       </div>
 
-                      {/* Giant Mechanical Display: SplitFlapText */}
+                      {/* Giant Mechanical Display: PANTH MISTRY */}
                       <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
                         <SplitFlapText
-                          words={['LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          words={['PANTH MISTRY']}
                           flipDuration={0.21}
                           stagger={0.06}
                           cycleDelay={2400}
@@ -372,7 +372,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           tileRadius={17}
                           gap={6}
                           fontSize={58}
-                          loop
+                          loop={false}
                           padTo={12}
                         />
                       </div>
@@ -493,7 +493,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                       </div>
                       <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
                         <SplitFlapText
-                          words={['LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          words={['PANTH MISTRY']}
                           flipDuration={0.21}
                           stagger={0.06}
                           cycleDelay={2400}
@@ -504,7 +504,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           tileRadius={17}
                           gap={6}
                           fontSize={58}
-                          loop
+                          loop={false}
                           padTo={12}
                         />
                       </div>
@@ -562,7 +562,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                       </div>
                       <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
                         <SplitFlapText
-                          words={['LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          words={['PANTH MISTRY']}
                           flipDuration={0.21}
                           stagger={0.06}
                           cycleDelay={2400}
@@ -573,7 +573,7 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                           tileRadius={17}
                           gap={6}
                           fontSize={58}
-                          loop
+                          loop={false}
                           padTo={12}
                         />
                       </div>
