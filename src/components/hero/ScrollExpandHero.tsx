@@ -23,6 +23,7 @@ import { FerrofluidPreset } from "../../types";
 import { GithubIcon, LinkedinIcon } from "../icons/SocialIcons";
 import { subscribeScroll, scrollTo } from "../../utils/smoothScroll";
 import AeroShards from "../background/AeroShards";
+import SplitFlapText from "../text/SplitFlapText";
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -357,10 +358,24 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                         <span className="font-semibold">ASPIRING AI DEVELOPER &amp; COMPUTER SCIENCE ENGINEER</span>
                       </div>
 
-                      {/* Giant Display Name: PANTH MISTRY */}
-                      <h2 className="text-4xl sm:text-6xl md:text-7xl font-display font-black tracking-tight drop-shadow-sm">
-                        <span className="text-blue-600">PANTH</span> <span className="text-gradient-mono">MISTRY</span>
-                      </h2>
+                      {/* Giant Mechanical Display: PANTH MISTRY */}
+                      <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
+                        <SplitFlapText
+                          words={['PANTH MISTRY', 'LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          flipDuration={0.12}
+                          stagger={0.06}
+                          cycleDelay={2400}
+                          charset="alphanumeric"
+                          flipsPerChar={8}
+                          tileColor="#111827"
+                          textColor="#f8fafc"
+                          tileRadius={8}
+                          gap={6}
+                          fontSize={52}
+                          loop
+                          padTo={12}
+                        />
+                      </div>
 
                       {/* Tagline Paragraph */}
                       <p className="text-xs sm:text-sm md:text-base text-slate-700 max-w-2xl mx-auto font-normal leading-relaxed">
@@ -476,9 +491,23 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                         <span className="text-sky-500 font-bold">&gt;_</span>
                         <span className="font-semibold">ASPIRING AI DEVELOPER &amp; COMPUTER SCIENCE ENGINEER</span>
                       </div>
-                      <h2 className="text-4xl sm:text-6xl md:text-7xl font-display font-black tracking-tight drop-shadow-sm">
-                        <span className="text-blue-600">PANTH</span> <span className="text-gradient-mono">MISTRY</span>
-                      </h2>
+                      <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
+                        <SplitFlapText
+                          words={['PANTH MISTRY', 'LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          flipDuration={0.12}
+                          stagger={0.06}
+                          cycleDelay={2400}
+                          charset="alphanumeric"
+                          flipsPerChar={8}
+                          tileColor="#111827"
+                          textColor="#f8fafc"
+                          tileRadius={8}
+                          gap={6}
+                          fontSize={52}
+                          loop
+                          padTo={12}
+                        />
+                      </div>
                       <p className="text-xs sm:text-sm md:text-base text-slate-700 max-w-2xl mx-auto font-normal leading-relaxed">
                         Crafting intelligent AI systems, custom 2D browser game engines, and full-stack software.
                         Diploma in Computer Science &amp; Engineering at ITM SLS Baroda University, preparing for B.Tech in Artificial Intelligence.
@@ -531,9 +560,23 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
                         <span className="text-sky-500 font-bold">&gt;_</span>
                         <span className="font-semibold">ASPIRING AI DEVELOPER &amp; COMPUTER SCIENCE ENGINEER</span>
                       </div>
-                      <h2 className="text-4xl sm:text-6xl md:text-7xl font-display font-black tracking-tight drop-shadow-sm">
-                        <span className="text-blue-600">PANTH</span> <span className="text-gradient-mono">MISTRY</span>
-                      </h2>
+                      <div className="flex justify-center items-center my-1 sm:my-2 w-full overflow-hidden py-1">
+                        <SplitFlapText
+                          words={['PANTH MISTRY', 'LAUNCH READY', 'SYNC ONLINE', 'SIGNAL LIVE']}
+                          flipDuration={0.12}
+                          stagger={0.06}
+                          cycleDelay={2400}
+                          charset="alphanumeric"
+                          flipsPerChar={8}
+                          tileColor="#111827"
+                          textColor="#f8fafc"
+                          tileRadius={8}
+                          gap={6}
+                          fontSize={52}
+                          loop
+                          padTo={12}
+                        />
+                      </div>
                       <p className="text-xs sm:text-sm md:text-base text-slate-700 max-w-2xl mx-auto font-normal leading-relaxed">
                         Crafting intelligent AI systems, custom 2D browser game engines, and full-stack software.
                         Diploma in Computer Science &amp; Engineering at ITM SLS Baroda University, preparing for B.Tech in Artificial Intelligence.
