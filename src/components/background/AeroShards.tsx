@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { draw, effect, frame, init, sampler, surface, target, uniforms } from 'vgpu';
 import type { Frame } from 'vgpu';
+import { ShardFallbackEngine } from './ShardFallbackEngine';
 
 import './AeroShards.css';
 
@@ -1552,6 +1553,30 @@ export default function AeroShards({
     };
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+    let fallbackEngine: ShardFallbackEngine | null = null;
+
+    const startFallback = () => {
+      if (disposed || fallbackEngine) return;
+      try {
+        fallbackEngine = new ShardFallbackEngine(canvas, {
+          backgroundColor,
+          shardColor,
+          accentColor,
+          speed: resolvedSpeed,
+          scale: resolvedScale,
+          density: resolvedDensity,
+          shardSize: resolvedShardSize,
+          spin: resolvedSpin,
+          turbulence: resolvedTurbulence,
+          interactionRadius: resolvedInteractionRadius,
+        });
+        fallbackEngine.start();
+        setReady(true);
+      } catch (err) {
+        console.error('[AeroShards] Universal fallback initialization error:', err);
+      }
+    };
+
     const reportFailure = (error: any) => {
       console.error(
         `[AeroShards Error Message]: ${error?.message} | where: ${error?.where} | causeMsg: ${error?.cause?.message} | causeStack: ${error?.cause?.stack}`
@@ -1601,6 +1626,9 @@ export default function AeroShards({
     };
 
     const deactivatePointer = () => {
+      if (fallbackEngine) {
+        fallbackEngine.setPointer(-2000, -2000, false);
+      }
       pointerRef.current.active = 0;
       holdRef.current.pointerId = null;
       const now = performance.now();
@@ -1610,6 +1638,10 @@ export default function AeroShards({
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      if (fallbackEngine) {
+        const rect = canvas.getBoundingClientRect();
+        fallbackEngine.setPointer(event.clientX - rect.left, event.clientY - rect.top, true);
+      }
       const settings = settingsRef.current!;
       if (!event.isPrimary || !visible || settings.interaction === INTERACTIONS.none) return;
       const next = pointFromClient(event.clientX, event.clientY);
@@ -1626,6 +1658,10 @@ export default function AeroShards({
     };
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (fallbackEngine) {
+        const rect = canvas.getBoundingClientRect();
+        fallbackEngine.setPointer(event.clientX - rect.left, event.clientY - rect.top, true);
+      }
       const settings = settingsRef.current!;
       if (!event.isPrimary || event.button !== 0 || !visible || settings.interaction === INTERACTIONS.none) return;
       // Never hijack links, form controls, or editable content layered above a background.
@@ -1684,12 +1720,19 @@ export default function AeroShards({
       wakeRenderer();
     };
 
+    const handleFallbackResize = () => {
+      if (fallbackEngine) {
+        fallbackEngine.resize();
+      }
+    };
+
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     window.addEventListener('pointerdown', handlePointerDown, { passive: true });
     window.addEventListener('pointerup', handlePointerEnd, { passive: true });
     window.addEventListener('pointercancel', deactivatePointer, { passive: true });
     window.addEventListener('blur', deactivatePointer);
     window.addEventListener('scroll', markBoundsDirty, { passive: true, capture: true });
+    window.addEventListener('resize', handleFallbackResize, { passive: true });
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleVisibilityChange);
     reduceMotion.addEventListener('change', handleVisibilityChange);
@@ -1698,10 +1741,10 @@ export default function AeroShards({
       entries => {
         const entry = entries[0];
         visibilityRatio = entry?.intersectionRatio ?? 1;
-        visible = entry ? entry.isIntersecting && visibilityRatio >= 0.02 : true;
-        console.log(`[AeroShards visibility]: isIntersecting=${entry?.isIntersecting}, ratio=${entry?.intersectionRatio}, visible=${visible}`);
+        visible = entry ? entry.isIntersecting : true;
         if (visible) {
           resumePending = true;
+          if (fallbackEngine) fallbackEngine.start();
         } else {
           interactionDeadline = 0;
           settlingDeadline = 0;
@@ -1710,6 +1753,7 @@ export default function AeroShards({
           pointer.presence = 0;
           holdRef.current.pointerId = null;
           resetPointerMotion(pointer);
+          if (fallbackEngine) fallbackEngine.stop();
         }
         wakeRenderer();
       },
@@ -1718,13 +1762,24 @@ export default function AeroShards({
     visibilityObserver.observe(root);
 
     void (async () => {
+      // Check if WebGPU is supported on this browser/device
+      const hasWebGpu = typeof navigator !== 'undefined' && 'gpu' in navigator && !!navigator.gpu;
+      if (!hasWebGpu) {
+        console.info('[AeroShards] WebGPU is not supported on this browser/device. Running universal shard engine.');
+        startFallback();
+        return;
+      }
+
       try {
         setReady(false);
         const resolvedQuality = resolveQuality(canvas);
         const preset = QUALITY_PRESETS[resolvedQuality] || QUALITY_PRESETS.medium;
         gpu = await init({ powerPreference: 'low-power' });
         if (disposed) return gpu.dispose();
-        unsubscribeGpuError = gpu.onError(reportFailure);
+        unsubscribeGpuError = gpu.onError((err) => {
+          reportFailure(err);
+          startFallback();
+        });
 
         const outputFormat = (
           navigator as Navigator & { gpu: { getPreferredCanvasFormat(): string } }
@@ -2002,12 +2057,12 @@ export default function AeroShards({
         };
 
         const scheduleRaf = () => {
-          if (disposed || runtimeFailed || animationFrameId || !visible || document.hidden) return;
+          if (disposed || runtimeFailed || animationFrameId || (!firstFrame && !visible) || document.hidden) return;
           animationFrameId = requestAnimationFrame(scheduleFrame);
         };
 
         const scheduleSleep = (targetTimestamp: number) => {
-          if (disposed || runtimeFailed || timeoutId || animationFrameId || !visible || document.hidden) return;
+          if (disposed || runtimeFailed || timeoutId || animationFrameId || (!firstFrame && !visible) || document.hidden) return;
           const delay = Math.max(0, targetTimestamp - performance.now() - 10);
           timeoutId = window.setTimeout(() => {
             timeoutId = 0;
@@ -2017,7 +2072,7 @@ export default function AeroShards({
 
         const scheduleFrame = (timestamp: number) => {
           animationFrameId = 0;
-          if (disposed || runtimeFailed || !visible || document.hidden) return;
+          if (disposed || runtimeFailed || (!firstFrame && !visible) || document.hidden) return;
 
           if (previousRafTimestamp) {
             const refreshSample = timestamp - previousRafTimestamp;
@@ -2120,18 +2175,27 @@ export default function AeroShards({
         wakeRef.current = wakeRenderer;
         wakeRenderer();
       } catch (error) {
+        console.warn('[AeroShards] WebGPU pipeline unavailable, switching to universal fallback:', error);
         reportFailure(error);
+        if (!disposed) {
+          startFallback();
+        }
       }
     })();
 
     return () => {
       disposed = true;
+      if (fallbackEngine) {
+        fallbackEngine.stop();
+        fallbackEngine = null;
+      }
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerEnd);
       window.removeEventListener('pointercancel', deactivatePointer);
       window.removeEventListener('blur', deactivatePointer);
       window.removeEventListener('scroll', markBoundsDirty, true);
+      window.removeEventListener('resize', handleFallbackResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleVisibilityChange);
       reduceMotion.removeEventListener('change', handleVisibilityChange);

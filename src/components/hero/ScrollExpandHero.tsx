@@ -653,14 +653,14 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
           <div className="w-[1100px] h-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.22)_0%,rgba(99,102,241,0.18)_45%,transparent_75%)] blur-3xl" />
         </div>
 
-        {/* Sticky AeroShards WebGL/WebGPU Canvas: stays locked in viewport with smooth top fade mask */}
+        {/* Sticky AeroShards WebGL/WebGPU Canvas: stays locked in viewport with soft top edge blend */}
         <div
           className="sticky top-0 w-full h-screen pointer-events-none -mb-[100vh] z-0 overflow-hidden"
           style={{
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 60px, rgba(0,0,0,0.2) 160px, rgba(0,0,0,0.7) 320px, black 500px)",
+              "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.2) 30px, black 80px)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.02) 60px, rgba(0,0,0,0.2) 160px, rgba(0,0,0,0.7) 320px, black 500px)",
+              "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.2) 30px, black 80px)",
           }}
         >
           <AeroShards
