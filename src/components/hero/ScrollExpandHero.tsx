@@ -248,10 +248,15 @@ export const ScrollExpandHero: React.FC<ScrollExpandHeroProps> = ({
         requestAnimationFrame(() => {
           const heroEl = sectionRef.current;
           if (heroEl) {
-            const rect = heroEl.getBoundingClientRect();
-            const span = heroEl.offsetHeight - window.innerHeight;
-            const p = clamp01(span > 0 ? -rect.top / span : 0);
-            targetProgressRef.current = p;
+            const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+            if (currentScrollY <= 2) {
+              targetProgressRef.current = 0;
+            } else {
+              const rect = heroEl.getBoundingClientRect();
+              const span = heroEl.offsetHeight - window.innerHeight;
+              const p = clamp01(span > 0 ? -rect.top / span : 0);
+              targetProgressRef.current = p;
+            }
           }
           ticking = false;
         });

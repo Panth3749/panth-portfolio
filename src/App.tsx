@@ -14,6 +14,16 @@ export const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'home' | 'architect-profile'>('home');
 
   useEffect(() => {
+    // Prevent browser from restoring previous scroll position on reload
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    const hash = window.location.hash;
+    if (hash && hash !== '#/architect-profile' && hash !== '#architect-profile') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
     initSmoothScroll();
     return () => {
       destroySmoothScroll();

@@ -8,6 +8,10 @@ const scrollHandlers = new Set<ScrollHandler>();
 export const initSmoothScroll = (): Lenis => {
   if (typeof window === 'undefined') return null as unknown as Lenis;
 
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+
   if (lenisInstance) return lenisInstance;
 
   lenisInstance = new Lenis({
